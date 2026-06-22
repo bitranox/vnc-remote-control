@@ -38,6 +38,11 @@ makes the tool a good fit when:
   visible in its process list. The control happens entirely over the host's VNC.
 - **A box is only reachable over VNC.** For remote administration where VNC is the
   one door you have, this drives it the same way a person at the console would.
+- **Legacy desktop software has only a GUI.** Old line-of-business apps, dated
+  installers, and vendor tools often have no API, CLI, or accessibility tree to
+  automate against, only a window. Reading the screen with OCR and clicking by
+  label drives them when nothing else can, and legacy UIs rarely change layout, so
+  the coordinates stay stable.
 
 ## What it does
 
@@ -151,6 +156,31 @@ vnc-remote-control --port 5901 --password secret screenshot /tmp/guest.png
 ```
 
 Apple Remote Desktop and TLS/VeNCrypt auth are not supported.
+
+## Timing (sluggish guests)
+
+Each key and click is sent as a down edge, a short delay, then an up edge. The
+default delays are tuned so a normal guest registers every event, but a sluggish
+guest (an old desktop, a loaded VM, legacy software that repaints slowly) can drop
+events typed too fast. There are two ways to slow things down:
+
+- **Quick knob:** the global `--delay-scale` option multiplies every delay. For a
+  guest that misses keystrokes, try doubling them:
+
+  ```bash
+  vnc-remote-control --port 5901 --delay-scale 2 type "slow guest"
+  ```
+
+- **Per-delay config:** the `[vnc]` section sets the individual delays (seconds).
+  Set them in a config file, via environment variables, or with `--set`:
+
+  ```bash
+  vnc-remote-control --port 5901 --set vnc.key_up_gap=0.2 type "hi"
+  ```
+
+  The keys are `key_down_hold`, `key_up_gap`, `click_move_gap`, `click_hold`, and
+  `click_release_gap`; see `CONFIG.md` and the bundled defaults for the documented
+  values. `--delay-scale` applies on top of whatever the config resolves to.
 
 ## Driving with an LLM (Claude)
 

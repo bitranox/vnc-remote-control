@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file following
 the [Keep a Changelog](https://keepachangelog.com/) format.
 
 
+## [Unreleased]
+
+## [0.2.0] 2026-06-22
+
+### Added
+- Tunable key/click timing for sluggish or legacy guests. A global `--delay-scale`
+  option multiplies every event delay, and a `[vnc]` configuration section sets the
+  individual delays (`key_down_hold`, `key_up_gap`, `click_move_gap`, `click_hold`,
+  `click_release_gap`) via config files, environment variables, or `--set`.
+- `RfbTimings` value object in the public API; `RfbClient` now accepts a `timings`
+  parameter.
+- README "When this is useful" documents driving legacy desktop software that has
+  only a GUI (no API, CLI, or accessibility tree).
+
+### Fixed
+- Corrected stale template leftovers and non-ASCII characters in CONFIG.md.
+
 ## [0.1.0] 2026-06-22
 
 ### Added

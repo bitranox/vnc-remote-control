@@ -33,6 +33,10 @@ class CLIContext:
     #: VNC password for servers requiring VNC auth (global ``--password`` option);
     #: ``None`` means only None-security servers are accepted.
     password: str | None = None
+    #: Multiplier applied to every RFB event delay (global ``--delay-scale``);
+    #: 1.0 leaves the configured timings unchanged, higher slows them for a
+    #: sluggish guest.
+    delay_scale: float = 1.0
 
 
 def store_cli_context(
@@ -46,6 +50,7 @@ def store_cli_context(
     host: str = "127.0.0.1",
     port: int | None = None,
     password: str | None = None,
+    delay_scale: float = 1.0,
 ) -> None:
     """Store CLI state in the Click context for subcommand access.
 
@@ -79,6 +84,7 @@ def store_cli_context(
         host=host,
         port=port,
         password=password,
+        delay_scale=delay_scale,
     )
 
 

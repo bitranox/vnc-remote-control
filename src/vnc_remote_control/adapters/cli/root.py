@@ -101,6 +101,13 @@ def _apply_cli_overrides(config: Config, set_overrides: tuple[str, ...]) -> Conf
     help="VNC password for servers requiring VNC auth (prefer the "
     "VNC_REMOTE_CONTROL_PASSWORD env var; a CLI value is visible in the process list).",
 )
+@option(
+    "--delay-scale",
+    type=float,
+    default=1.0,
+    show_default=True,
+    help="Multiply every key/click delay by this factor; raise it for a sluggish guest.",
+)
 @click.pass_context
 def cli(
     ctx: click.Context,
@@ -111,6 +118,7 @@ def cli(
     host: str,
     port: int | None,
     password: str | None,
+    delay_scale: float,
 ) -> None:
     """Root command storing global flags and syncing shared traceback state.
 
@@ -145,6 +153,7 @@ def cli(
         host=host,
         port=port,
         password=password,
+        delay_scale=delay_scale,
     )
     apply_traceback_preferences(traceback)
 

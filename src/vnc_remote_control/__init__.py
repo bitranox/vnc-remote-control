@@ -23,11 +23,13 @@ from .domain.behaviors import (
     build_greeting,
 )
 from .domain.keymap import char_keysym
+from .domain.timing import RfbTimings
 
 __all__ = [
     "CANONICAL_GREETING",
     "RfbClient",
     "RfbError",
+    "RfbTimings",
     "Word",
     "build_greeting",
     "char_keysym",

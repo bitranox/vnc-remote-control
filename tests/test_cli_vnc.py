@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 import pytest
+from lib_layered_config import Config
 
 from vnc_remote_control.adapters import cli as cli_mod
 from vnc_remote_control.adapters import ocr
 from vnc_remote_control.adapters.cli.commands import vnc as vnc_cmd
+from vnc_remote_control.adapters.config.vnc import build_rfb_timings
 from vnc_remote_control.composition import build_production
+from vnc_remote_control.domain.timing import RfbTimings
 
 
 class _FakeClient:
@@ -15,10 +21,13 @@ class _FakeClient:
 
     last_click: tuple[int, int] | None = None
 
-    def __init__(self, host: str, port: int, password: str | None = None) -> None:
+    last_timings: object = None
+
+    def __init__(self, host: str, port: int, password: str | None = None, timings: object = None) -> None:
         self.host = host
         self.port = port
         self.password = password
+        type(self).last_timings = timings
 
     def __enter__(self) -> _FakeClient:
         return self
@@ -213,3 +222,43 @@ def test_ocr_words_screenshots_then_parses(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.setattr(ocr, "run_tesseract_tsv", _fake_tsv)
     words = vnc_cmd._ocr_words("127.0.0.1", 5901, None, ocr.DEFAULT_MIN_CONFIDENCE)  # type: ignore[reportPrivateUsage]
     assert [w.text for w in words] == ["Start", "Cancel"]
+
+
+def _close(actual: float, expected: float) -> bool:
+    """Float comparison helper (pytest.approx is only partially typed)."""
+    return abs(actual - expected) < 1e-9
+
+
+@pytest.mark.os_agnostic
+def test_default_timings_are_unscaled(monkeypatch: pytest.MonkeyPatch, managed_traceback_state: None) -> None:
+    """Without --delay-scale, the client gets the configured default timings."""
+    monkeypatch.setattr(vnc_cmd, "RfbClient", _FakeClient)
+    _FakeClient.last_timings = None
+    assert cli_mod.main(["--port", "5901", "click", "1", "2"], services_factory=build_production) == 0
+    timings = _FakeClient.last_timings
+    assert isinstance(timings, RfbTimings)
+    assert _close(timings.key_down_hold, 0.05)
+
+
+@pytest.mark.os_agnostic
+def test_delay_scale_scales_every_timing(monkeypatch: pytest.MonkeyPatch, managed_traceback_state: None) -> None:
+    """--delay-scale multiplies every event delay before the client is built."""
+    monkeypatch.setattr(vnc_cmd, "RfbClient", _FakeClient)
+    _FakeClient.last_timings = None
+    rc = cli_mod.main(["--port", "5901", "--delay-scale", "2", "click", "1", "2"], services_factory=build_production)
+    assert rc == 0
+    timings = _FakeClient.last_timings
+    assert isinstance(timings, RfbTimings)
+    assert _close(timings.key_down_hold, 0.10)
+    assert _close(timings.click_release_gap, 0.40)
+
+
+@pytest.mark.os_agnostic
+def test_build_rfb_timings_reads_vnc_section(config_factory: Callable[[dict[str, Any]], Config]) -> None:
+    """build_rfb_timings reads the [vnc] section and falls back to defaults."""
+    config = config_factory({"vnc": {"key_down_hold": 0.5, "click_hold": 0.3}})
+    timings = build_rfb_timings(config)
+    assert _close(timings.key_down_hold, 0.5)
+    assert _close(timings.click_hold, 0.3)
+    # Unspecified keys keep the tuned defaults.
+    assert _close(timings.key_up_gap, 0.09)

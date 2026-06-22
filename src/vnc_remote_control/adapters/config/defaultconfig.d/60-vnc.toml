@@ -1,0 +1,54 @@
+# ==============================================================================
+# vnc - RFB event timing
+# ==============================================================================
+#
+# Delays (in seconds) inserted between the down and up edges of each key and
+# pointer event. The defaults are tuned so a normal guest registers every event.
+# A sluggish guest (an old desktop, a loaded VM) can drop events typed too fast;
+# raise these values, or scale them all at once with the global --delay-scale
+# option (for example --delay-scale 2 doubles every delay).
+#
+# Settings are loaded via lib_layered_config and can be overridden via:
+#   - Host/User config files (see precedence in defaultconfig.toml)
+#   - Environment variables: VNC_REMOTE_CONTROL___VNC__<KEY>=<VALUE>
+#   - .env files (no prefix): VNC__<KEY>=<VALUE>
+#   - The CLI: --set vnc.<key>=<value>
+#
+# Each value must be a positive number.
+#
+[vnc]
+
+# Purpose: Hold between a key-down and the matching key-up edge.
+# Type: float (> 0), seconds
+# Default: 0.05
+# Environment Variable: VNC_REMOTE_CONTROL___VNC__KEY_DOWN_HOLD=0.05
+# .env: VNC__KEY_DOWN_HOLD=0.05
+key_down_hold = 0.05
+
+# Purpose: Gap after a key-up edge before the next key is sent.
+# Type: float (> 0), seconds
+# Default: 0.09
+# Environment Variable: VNC_REMOTE_CONTROL___VNC__KEY_UP_GAP=0.09
+# .env: VNC__KEY_UP_GAP=0.09
+key_up_gap = 0.09
+
+# Purpose: Gap after moving the pointer before pressing the button.
+# Type: float (> 0), seconds
+# Default: 0.1
+# Environment Variable: VNC_REMOTE_CONTROL___VNC__CLICK_MOVE_GAP=0.1
+# .env: VNC__CLICK_MOVE_GAP=0.1
+click_move_gap = 0.1
+
+# Purpose: Hold between a button-down and button-up edge.
+# Type: float (> 0), seconds
+# Default: 0.12
+# Environment Variable: VNC_REMOTE_CONTROL___VNC__CLICK_HOLD=0.12
+# .env: VNC__CLICK_HOLD=0.12
+click_hold = 0.12
+
+# Purpose: Gap after releasing the button.
+# Type: float (> 0), seconds
+# Default: 0.2
+# Environment Variable: VNC_REMOTE_CONTROL___VNC__CLICK_RELEASE_GAP=0.2
+# .env: VNC__CLICK_RELEASE_GAP=0.2
+click_release_gap = 0.2

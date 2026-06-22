@@ -27,6 +27,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher, modes
 from PIL import Image, ImageDraw
 
 from ..domain import keymap
+from ..domain.timing import RfbTimings
 
 #: RFB security type for no authentication.
 _SECURITY_NONE = 1
@@ -50,15 +51,6 @@ def _reverse_bits(byte: int) -> int:
     return result
 
 
-# Default delays (seconds) between the down and up edges of an event. The values
-# match the original tools, which were tuned so guests register each event.
-_KEY_DOWN_HOLD = 0.05
-_KEY_UP_GAP = 0.09
-_CLICK_MOVE_GAP = 0.1
-_CLICK_HOLD = 0.12
-_CLICK_RELEASE_GAP = 0.2
-
-
 class RfbError(Exception):
     """Raised when the RFB handshake or protocol exchange fails."""
 
@@ -76,11 +68,19 @@ class RfbClient:
             client.type_text("hello")
     """
 
-    def __init__(self, host: str, port: int, timeout: float = 15.0, password: str | None = None) -> None:
+    def __init__(
+        self,
+        host: str,
+        port: int,
+        timeout: float = 15.0,
+        password: str | None = None,
+        timings: RfbTimings | None = None,
+    ) -> None:
         self.host = host
         self.port = port
         self.timeout = timeout
         self.password = password
+        self._timings = timings or RfbTimings()
         self._sock: socket.socket | None = None
         self.width = 0
         self.height = 0
@@ -175,11 +175,11 @@ class RfbClient:
     def click(self, x: int, y: int) -> None:
         """Send a left-button click at pixel position ``(x, y)``."""
         self._pointer(0, x, y)
-        time.sleep(_CLICK_MOVE_GAP)
+        time.sleep(self._timings.click_move_gap)
         self._pointer(1, x, y)
-        time.sleep(_CLICK_HOLD)
+        time.sleep(self._timings.click_hold)
         self._pointer(0, x, y)
-        time.sleep(_CLICK_RELEASE_GAP)
+        time.sleep(self._timings.click_release_gap)
 
     def _key(self, keysym: int, *, down: bool) -> None:
         """Send a single KeyEvent (down or up) for ``keysym``."""
@@ -188,9 +188,9 @@ class RfbClient:
     def tap(self, keysym: int) -> None:
         """Send a key down then key up for ``keysym``."""
         self._key(keysym, down=True)
-        time.sleep(_KEY_DOWN_HOLD)
+        time.sleep(self._timings.key_down_hold)
         self._key(keysym, down=False)
-        time.sleep(_KEY_UP_GAP)
+        time.sleep(self._timings.key_up_gap)
 
     def press(self, name: str) -> None:
         """Send a single named key such as "enter", "tab", or "esc"."""

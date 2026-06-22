@@ -24,6 +24,7 @@ import lib_log_rich.runtime
 import rich_click as click
 
 from ... import ocr
+from ...config.vnc import build_rfb_timings
 from ...rfb import RfbClient, RfbError
 from ..constants import CLICK_CONTEXT_SETTINGS
 from ..context import get_cli_context
@@ -41,6 +42,18 @@ def _server(ctx: click.Context) -> tuple[str, int, str | None]:
     if cli_ctx.port is None:
         raise click.UsageError("--port is required for this command (e.g. --port 5901)")
     return cli_ctx.host, cli_ctx.port, cli_ctx.password
+
+
+def _client(ctx: click.Context) -> RfbClient:
+    """Build an RfbClient for the configured server with the configured timings.
+
+    Event timings come from the ``[vnc]`` config section, scaled by the global
+    ``--delay-scale`` option.
+    """
+    host, port, password = _server(ctx)
+    cli_ctx = get_cli_context(ctx)
+    timings = build_rfb_timings(cli_ctx.config).scaled(cli_ctx.delay_scale)
+    return RfbClient(host, port, password=password, timings=timings)
 
 
 def _parse_xy(_ctx: click.Context, _param: click.Parameter, value: str | None) -> tuple[int, int] | None:
@@ -92,10 +105,9 @@ def _ocr_words(host: str, port: int, password: str | None, min_confidence: float
 @click.pass_context
 def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
     """Type a literal string into the guest."""
-    host, port, password = _server(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-type", extra={"command": "type"}):
         logger.info("Typing text into guest")
-        with RfbClient(host, port, password=password) as client:
+        with _client(ctx) as client:
             client.type_text(text)
             if enter:
                 client.press("enter")
@@ -107,10 +119,9 @@ def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
 @click.pass_context
 def cli_key(ctx: click.Context, name: str) -> None:
     """Press a single named key such as enter, tab, or esc."""
-    host, port, password = _server(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-key", extra={"command": "key"}):
         logger.info("Pressing named key")
-        with RfbClient(host, port, password=password) as client:
+        with _client(ctx) as client:
             client.press(name)
     click.echo(f"pressed {name}", err=True)
 
@@ -121,10 +132,9 @@ def cli_key(ctx: click.Context, name: str) -> None:
 @click.pass_context
 def cli_click(ctx: click.Context, x: int, y: int) -> None:
     """Left-click at pixel position X Y."""
-    host, port, password = _server(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-click", extra={"command": "click"}):
         logger.info("Clicking at pixel position")
-        with RfbClient(host, port, password=password) as client:
+        with _client(ctx) as client:
             client.click(x, y)
     click.echo(f"clicked ({x}, {y})", err=True)
 
@@ -142,10 +152,9 @@ def cli_click(ctx: click.Context, x: int, y: int) -> None:
 @click.pass_context
 def cli_screenshot(ctx: click.Context, outfile: str, mark: tuple[int, int] | None, grid: int | None) -> None:
     """Save the native-resolution framebuffer to a PNG file."""
-    host, port, password = _server(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-screenshot", extra={"command": "screenshot"}):
         logger.info("Capturing framebuffer screenshot")
-        with RfbClient(host, port, password=password) as client:
+        with _client(ctx) as client:
             width, height = client.screenshot(outfile, mark=mark, grid=grid)
     # Parseable resolution line on stdout so an LLM can read the native size and
     # trust that screenshot pixels equal click coordinates.
@@ -202,7 +211,7 @@ def cli_click_text(ctx: click.Context, pattern: str, min_confidence: float) -> N
         if target is None:
             click.echo(f"no on-screen text matched {pattern!r}", err=True)
             raise SystemExit(1)
-        with RfbClient(host, port, password=password) as client:
+        with _client(ctx) as client:
             client.click(target.cx, target.cy)
     click.echo(f'clicked "{target.text}" at ({target.cx},{target.cy})')
 

@@ -45,9 +45,9 @@ Configuration is loaded and merged in the following order (lowest to highest pre
 
 | Placeholder  | Linux                        | macOS / Windows              |
 |--------------|------------------------------|------------------------------|
-| `{slug}`     | `vnc-remote-control`   | —                            |
-| `{vendor}`   | —                            | `bitranox`                   |
-| `{app}`      | —                            | `Bitranox Template Py Cli`   |
+| `{slug}`     | `vnc-remote-control`   | -                            |
+| `{vendor}`   | -                            | `bitranox`                   |
+| `{app}`      | -                            | `vnc_remote_control`         |
 | `{hostname}` | System hostname              | System hostname              |
 
 ### Concrete Examples
@@ -58,10 +58,10 @@ Configuration is loaded and merged in the following order (lowest to highest pre
 - Host config: `/etc/xdg/vnc-remote-control/hosts/myserver.toml`
 
 **macOS:**
-- User config: `~/Library/Application Support/bitranox/Bitranox Template Py Cli/config.toml`
+- User config: `~/Library/Application Support/bitranox/vnc_remote_control/config.toml`
 
 **Windows:**
-- User config: `%APPDATA%\bitranox\Bitranox Template Py Cli\config.toml`
+- User config: `%APPDATA%\bitranox\vnc_remote_control\config.toml`
 
 ---
 
@@ -109,7 +109,7 @@ Display the merged configuration from all sources (defaults → app → host →
 | Option | Required | Description |
 |--------|:--------:|-------------|
 | `--format` | No | Output format: `human` (default) or `json`. |
-| `--section NAME` | No | Show only a specific section (e.g., `lib_log_rich`, `email`). |
+| `--section NAME` | No | Show only a specific section (e.g., `lib_log_rich`, `email`, `vnc`). |
 | `--profile NAME` | No | Load configuration for a specific profile. |
 
 #### Examples
@@ -418,8 +418,8 @@ VNC_REMOTE_CONTROL___EMAIL__SMTP_HOSTS='["smtp.example.com:587"]' vnc-remote-con
 ```
 
 **Separator reference:**
-- `___` (triple underscore) — separates prefix from section
-- `__` (double underscore) — separates section from key
+- `___` (triple underscore) - separates prefix from section
+- `__` (double underscore) - separates section from key
 
 ---
 
@@ -465,10 +465,10 @@ Instead, create your own override files in the appropriate layer directory using
 ~/.config/vnc-remote-control/999-myconfig.toml
 
 # User-level customization (macOS)
-~/Library/Application Support/bitranox/Bitranox Template Py Cli/999-myconfig.toml
+~/Library/Application Support/bitranox/vnc_remote_control/999-myconfig.toml
 
 # User-level customization (Windows)
-%APPDATA%\bitranox\Bitranox Template Py Cli\999-myconfig.toml
+%APPDATA%\bitranox\vnc_remote_control\999-myconfig.toml
 
 # System-wide customization (Linux)
 /etc/xdg/vnc-remote-control/999-myconfig.toml

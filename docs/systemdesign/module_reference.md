@@ -15,6 +15,9 @@ subsystems are inherited from the bitranox CLI-application template.
 
 - `domain/keymap.py` - named-key table and `char_keysym` (a character's keysym is
   its code point; the server owns the layout).
+- `domain/timing.py` - `RfbTimings` value object: the per-event key/click delays,
+  with a `scaled(factor)` helper. Configured via the `[vnc]` section
+  (`adapters/config/vnc.py`) and scaled by `--delay-scale`.
 - `adapters/rfb.py` - `RfbClient`: RFB 003.008 handshake (None and VNC-password
   security), raw framebuffer capture, `screenshot` (PNG via Pillow), `click`,
   literal-keysym `type`/`press`, and the crosshair/grid overlays (PIL ImageDraw).
@@ -74,6 +77,7 @@ Global options:
 | `--host HOST` | RFB server host (default: 127.0.0.1) |
 | `--port PORT` | RFB server TCP port (required by the VNC subcommands) |
 | `--password PASS` | VNC password (prefer the `VNC_REMOTE_CONTROL_PASSWORD` env var) |
+| `--delay-scale N` | Multiply every key/click delay (raise it for a sluggish guest) |
 | `--traceback / --no-traceback` | Show a full traceback on unexpected errors |
 | `--profile NAME` | Load configuration from a named profile |
 | `--set SECTION.KEY=VALUE` | Override a configuration setting (repeatable) |
