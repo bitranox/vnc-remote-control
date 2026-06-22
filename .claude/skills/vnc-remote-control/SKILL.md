@@ -18,9 +18,11 @@ to reliably control a guest, including how to click the right pixel every time.
   `choco install tesseract`.
 - The VNC server's host and port. Every command takes `--port`; `--host`
   defaults to `127.0.0.1`. Examples below use `--port 5901`.
-- Two optional global flags: `--password <p>` for a password-protected server,
-  and `--delay-scale <N>` to slow every input event by a factor. Use the latter
-  on a slow or remote guest, or when input races a UI animation (see below).
+- Authentication: VNC has no username, only a password. For a password-protected
+  server pass `--password <p>`, or set `VNC_REMOTE_CONTROL_PASSWORD` so it stays out
+  of the process list; without one, only None-security servers are accepted.
+- `--delay-scale <N>` slows every input event by a factor. Use it on a slow or
+  remote guest, or when input races a UI animation (see below).
 
 ## The one rule that makes clicking reliable
 
@@ -51,6 +53,18 @@ guess at coordinates from a resized view.
 ## Commands
 
 ```bash
+# connection: --port is required; --host defaults to 127.0.0.1
+vnc-remote-control --host 10.0.0.5 --port 5901 screenshot /tmp/s.png
+
+# auth: VNC has no username, only a password. Prefer the env var so the
+# password is not visible in the process list:
+VNC_REMOTE_CONTROL_PASSWORD=secret vnc-remote-control --port 5901 screenshot /tmp/s.png
+# or pass it inline (visible in `ps`):
+vnc-remote-control --port 5901 --password secret screenshot /tmp/s.png
+
+# slow or laggy guest dropping input: scale every key/click delay
+vnc-remote-control --port 5901 --delay-scale 2 type "slow guest"
+
 # see the screen (prints "resolution: WxH")
 vnc-remote-control --port 5901 screenshot /tmp/s.png
 

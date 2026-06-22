@@ -6,6 +6,13 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [0.2.2] 2026-06-22
+
+### Documentation
+- Driving-with-an-LLM skill: documents authentication (VNC has no username, only a
+  password, passed via `--password` or the `VNC_REMOTE_CONTROL_PASSWORD` environment
+  variable) and adds connection (`--host`/`--port`) and `--delay-scale` examples.
+
 ## [0.2.1] 2026-06-22
 
 ### Changed
