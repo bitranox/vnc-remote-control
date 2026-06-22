@@ -6,6 +6,21 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [0.2.1] 2026-06-22
+
+### Changed
+- Release/CI workflows synced from the `default_cicd_public` template: PyPI publish
+  now uses hybrid auth (API token, or OIDC Trusted Publisher when no token secret is
+  set), and CI adds an import-linter architecture gate.
+
+### Documentation
+- README: clarified that the tool is a pure client, installed only on the control or
+  development box, with nothing on the targets.
+- Driving-with-an-LLM skill: documents the `--password` and `--delay-scale` global
+  options, adds a `click-text` fallback for low-contrast or placeholder text, and
+  generalizes the server-side keyboard-layout wording (openvmm as an example, not a
+  requirement).
+
 ## [0.2.0] 2026-06-22
 
 ### Added

@@ -56,6 +56,15 @@ makes the tool a good fit when:
 
 ## Install
 
+### Where to install it
+
+`vnc-remote-control` is a pure client: install it only on the machine you drive it
+from (your control or development box), never on the targets. It connects out to a
+target's VNC/RFB port over the network, directly or through an SSH tunnel to a
+console port. Nothing runs on the machine you control: no agent, no service, no open
+port on the target, nothing in its process list. So one machine has the tool, and
+any number of targets are driven over VNC while staying untouched.
+
 ### Prerequisite: tesseract
 
 tesseract is a required system dependency. OCR is core to the tool (it is how an

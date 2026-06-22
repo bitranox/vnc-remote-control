@@ -18,6 +18,9 @@ to reliably control a guest, including how to click the right pixel every time.
   `choco install tesseract`.
 - The VNC server's host and port. Every command takes `--port`; `--host`
   defaults to `127.0.0.1`. Examples below use `--port 5901`.
+- Two optional global flags: `--password <p>` for a password-protected server,
+  and `--delay-scale <N>` to slow every input event by a factor. Use the latter
+  on a slow or remote guest, or when input races a UI animation (see below).
 
 ## The one rule that makes clicking reliable
 
@@ -75,17 +78,23 @@ vnc-remote-control --port 5901 key esc
 When the target has visible text, `click-text "Label"` (or `ocr --grep` then
 `click <cx> <cy>`) is more reliable than reading a pixel, because it clicks the
 center of the recognized word and does not depend on your coordinate estimate.
-Fall back to pixel clicks for icons and controls with no text, and use
+
+`click-text` only works on text OCR can actually read. Low-contrast or
+placeholder text (for example a faint greyed-out search-box hint) is often
+missed, so `click-text` finds no match and fails. When that happens, take a
+`screenshot`, read the target's pixel off it, and use `click X Y` instead. Also
+fall back to pixel clicks for icons and controls with no text, and use
 `--mark X,Y` to confirm the pixel first.
 
 ## Typing and keyboard layout
 
 `type` sends literal keysyms: each character's keysym is its code point, exactly
 like a standard VNC client. It does no client-side translation. The guest
-keyboard layout is a server setting: openvmm is layout-aware (its
-`--vnc-keyboard-layout` flag, which on Proxmox the ovm shim sets from the VM's
-`keyboard:` key) and maps keysyms into the guest layout. When the server layout
-matches the guest, every character types correctly, including symbols.
+keyboard layout is a server-side setting. A layout-aware server (for example
+openvmm, through its `--vnc-keyboard-layout` flag) maps the keysyms into the guest
+layout. When the server's layout matches the guest's, every character types
+correctly, including symbols. Against a server that is not layout-aware, only
+characters whose keysym matches the guest's physical-key position land as expected.
 
 A text field must have keyboard focus before you `type` (see the focus tip
 below).
@@ -107,3 +116,6 @@ field, and type again.
   login, BSOD, dialog) before deciding what to send.
 - If OCR misreads small text, take the screenshot and read the coordinates
   yourself off the native image.
+- If input lands in the wrong place or not at all right after a menu, dialog, or
+  search panel opens, the UI was probably still animating. Slow the input with
+  `--delay-scale 2` (or higher) and retry.

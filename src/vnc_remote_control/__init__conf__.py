@@ -40,7 +40,7 @@ name = "vnc_remote_control"
 #: Human-readable summary shown in CLI help output.
 title = "Layout-aware VNC/RFB remote control CLI: type, key, click, screenshot, against any VNC/RFB server."
 #: Current release version pulled from ``pyproject.toml`` by automation.
-version = "0.2.0"
+version = "0.2.1"
 #: Repository homepage presented to users.
 homepage = "https://github.com/bitranox/vnc-remote-control"
 #: Author attribution surfaced in CLI output.
