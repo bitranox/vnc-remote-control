@@ -1,0 +1,11 @@
+{
+  "name": "vnc-remote-control",
+  "description": "Observe and control a machine over VNC/RFB with the vnc-remote-control CLI. Ships the vnc-remote-control skill: screenshot, read the screen (OCR), click a pixel or a labeled UI element, type text and press keys against any VNC/RFB server (VM consoles, boot screens, login prompts, dialogs).",
+  "version": "1.0.0",
+  "author": {
+    "name": "bitranox"
+  },
+  "homepage": "https://github.com/bitranox/vnc-remote-control",
+  "repository": "https://github.com/bitranox/vnc-remote-control",
+  "license": "MIT"
+}

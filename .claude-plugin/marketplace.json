@@ -1,0 +1,16 @@
+{
+  "name": "vnc-remote-control",
+  "owner": {
+    "name": "bitranox"
+  },
+  "metadata": {
+    "description": "vnc-remote-control delivered as a single Claude Code plugin: a skill to drive any VNC/RFB server (screenshot, OCR, click, type, keys) with the vnc-remote-control CLI."
+  },
+  "plugins": [
+    {
+      "name": "vnc-remote-control",
+      "source": ".",
+      "description": "Observe and control a machine over VNC/RFB with the vnc-remote-control CLI: screenshot, read the screen (OCR), click a pixel or labeled element, type text and press keys."
+    }
+  ]
+}
