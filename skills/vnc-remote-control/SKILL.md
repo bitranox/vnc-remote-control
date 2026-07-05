@@ -1,135 +1,102 @@
 ---
 name: vnc-remote-control
-description: Use when you need to observe and control a machine over VNC/RFB - take a screenshot, read the screen (including OCR), click a pixel or a labeled UI element, type text, or press keys - using the vnc-remote-control CLI. Triggers on driving or automating a guest GUI through VNC (a VM console, a boot screen, a login prompt, a dialog).
+description: Use when you must drive a remote machine, VM, or GUI/TUI program over VNC/RFB - sending keystrokes and clicks and reading the screen with OCR - because the target has no network, SSH, agent, or API. Covers Proxmox/hypervisor VM consoles (first boot before networking, or a VM that will never have a network), legacy line-of-business GUIs and dated installers that are only a window, and old TUI apps driven by keypresses. Nothing is installed on the target except its VNC server (Proxmox ships noVNC out of the box). Driven with the `vnc-remote-control` CLI (PyPI).
 ---
 
-# Driving a machine over VNC with vnc-remote-control
+# Driving a remote machine over VNC (vnc-remote-control)
 
-`vnc-remote-control` is a small CLI that drives a VNC/RFB server: screenshot,
-click, type, press keys, and OCR the screen. This skill explains how to use it
-to reliably control a guest, including how to click the right pixel every time.
+Drive a target's screen over plain VNC/RFB with the `vnc-remote-control` CLI: type text, press
+named keys, click, screenshot, and OCR. It is a pure **client** - nothing runs on the target, no
+agent, no service, no open port, nothing in its process list. The control happens entirely through
+a VNC/RFB server the target already exposes.
 
-## Prerequisites
+## When to use
 
-- The `vnc-remote-control` command on PATH (`pip install vnc-remote-control` or
-  `uv tool install vnc-remote-control`).
-- `tesseract` installed (required for `ocr` and `click-text`):
-  `apt-get install tesseract-ocr`, `brew install tesseract`, or
-  `choco install tesseract`.
-- The VNC server's host and port. Every command takes `--port`; `--host`
-  defaults to `127.0.0.1`. Examples below use `--port 5901`.
-- Authentication: VNC has no username, only a password. For a password-protected
-  server pass `--password <p>`, or set `VNC_REMOTE_CONTROL_PASSWORD` so it stays out
-  of the process list; without one, only None-security servers are accepted.
-- `--delay-scale <N>` slows every input event by a factor. Use it on a slow or
-  remote guest, or when input races a UI animation (see below).
+- **A target with no network.** A Proxmox/hypervisor VM that is not on the network yet (or never
+  will be) is still driveable through its VNC console - the same screen as the web UI. Ideal for
+  first-boot setup where you configure networking before the guest can reach anything.
+- **No footprint wanted.** Operate a machine with nothing installed or visible on it.
+- **VNC is the only door.** Remote admin where VNC is the one reachable interface.
+- **Legacy GUI software** with no API/CLI/accessibility tree - only a window. Read it with OCR,
+  click by label. Legacy UIs rarely move, so coordinates stay stable.
+- **Old TUI programs** that you operate purely by keypresses (`type` + `key`); the target needs only
+  a VNC server, which Proxmox provides out of the box.
 
-## The one rule that makes clicking reliable
+## Step 0: install the tool, then use it (on YOUR control box only, never the target)
 
-RFB pointer coordinates are absolute framebuffer pixels, and a screenshot is
-taken at the native framebuffer resolution. So a coordinate you read off the
-screenshot is the exact coordinate to click. There is no scale factor.
+This skill installs `vnc-remote-control` and then drives it. First make sure the CLI and tesseract
+are present on the machine you drive FROM (never on the target):
 
-The usual cause of "I clicked the wrong place" is reading coordinates off a
-scaled image. Do not let your image viewer downscale the screenshot, and do not
-guess at coordinates from a resized view.
+```bash
+# the CLI - persistent on PATH via uv; skip if already installed
+command -v vnc-remote-control >/dev/null || uv tool install vnc-remote-control
+# tesseract is a REQUIRED system dependency (OCR is how you find what to click)
+command -v tesseract >/dev/null || sudo apt-get install -y tesseract-ocr   # macOS: brew install tesseract | Windows: choco install tesseract
+```
 
-## The control loop
-
-1. Capture and look. Run `screenshot out.png`. It prints `resolution: WxH` on
-   stdout. View `out.png` at native size.
-2. Decide where to act. Read the (x, y) directly off the screenshot, or use OCR
-   to locate UI text (see below).
-3. Verify a coordinate before committing (optional but cheap). Run
-   `screenshot out.png --mark X,Y` and confirm the crosshair sits on the target.
-   `--grid 50` overlays a coordinate grid if you want a ruler.
-4. Act: `click X Y`, or click by label with `click-text`. Before you `type`,
-   click into the target text field: a window you just opened or launched
-   usually does NOT have keyboard focus yet, so typing goes nowhere. Click the
-   field first, then `type` / `key`.
-5. Confirm. Take a fresh screenshot and check the result before the next step.
-   Always re-screenshot; never assume an action landed.
+For a one-off without a persistent install, `uvx vnc-remote-control ...` runs it on demand (uv
+fetches it each run); tesseract is still required. Then drive the target with the commands below.
 
 ## Commands
 
+Every command needs `--port`; `--host` defaults to `127.0.0.1`.
+
+| Command                                       | Does                                                                                            |
+|-----------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `type "text" [--enter]`                       | Type a literal string into the focused field (`--enter` adds Return)                            |
+| `key <name>`                                  | Press one named key: `enter`, `tab`, `esc`, arrows, `f1`-`f12`, ...                             |
+| `click X Y`                                   | Left-click at an absolute framebuffer pixel                                                     |
+| `screenshot out.png [--mark X,Y] [--grid 50]` | Write the native-resolution PNG; prints `resolution: WxH`; optional crosshair / coordinate grid |
+| `ocr [--grep PATTERN]`                        | List on-screen words with their click centers and confidence                                    |
+| `click-text "PATTERN"`                        | Click the first on-screen word matching the pattern                                             |
+
 ```bash
-# connection: --port is required; --host defaults to 127.0.0.1
-vnc-remote-control --host 10.0.0.5 --port 5901 screenshot /tmp/s.png
-
-# auth: VNC has no username, only a password. Prefer the env var so the
-# password is not visible in the process list:
-VNC_REMOTE_CONTROL_PASSWORD=secret vnc-remote-control --port 5901 screenshot /tmp/s.png
-# or pass it inline (visible in `ps`):
-vnc-remote-control --port 5901 --password secret screenshot /tmp/s.png
-
-# slow or laggy guest dropping input: scale every key/click delay
-vnc-remote-control --port 5901 --delay-scale 2 type "slow guest"
-
-# see the screen (prints "resolution: WxH")
-vnc-remote-control --port 5901 screenshot /tmp/s.png
-
-# verify a candidate click point with a crosshair
-vnc-remote-control --port 5901 screenshot /tmp/s.png --mark 640,480
-
-# read the screen: each line is "<cx> <cy> <w>x<h> conf=<n> <text>"
-# cx,cy is the center, i.e. the point to click
-vnc-remote-control --port 5901 ocr
-vnc-remote-control --port 5901 ocr --grep "Sign in"
-
-# click: by pixel, or (more reliable) by on-screen label
-vnc-remote-control --port 5901 click 640 480
-vnc-remote-control --port 5901 click-text "Next"
-
-# type text (literal keysyms; the server maps the layout) and press keys
+vnc-remote-control --port 5901 screenshot /tmp/g.png --grid 50
+vnc-remote-control --host 10.0.0.5 --port 5901 click-text "Next"
 vnc-remote-control --port 5901 type "chkdsk c: /f" --enter
-vnc-remote-control --port 5901 type "user@host"
-vnc-remote-control --port 5901 key enter
-vnc-remote-control --port 5901 key esc
 ```
 
-## Clicking: prefer labels over pixels
+## The driving loop (how to click the right pixel every time)
 
-When the target has visible text, `click-text "Label"` (or `ocr --grep` then
-`click <cx> <cy>`) is more reliable than reading a pixel, because it clicks the
-center of the recognized word and does not depend on your coordinate estimate.
+RFB pointer coordinates are **absolute framebuffer pixels - the same pixels as a native-resolution
+screenshot.** This tool never scales, so a coordinate read off the screenshot is the exact click
+coordinate. (Past "wrong pixel" failures came from reading coordinates off a scaled image.)
 
-`click-text` only works on text OCR can actually read. Low-contrast or
-placeholder text (for example a faint greyed-out search-box hint) is often
-missed, so `click-text` finds no match and fails. When that happens, take a
-`screenshot`, read the target's pixel off it, and use `click X Y` instead. Also
-fall back to pixel clicks for icons and controls with no text, and use
-`--mark X,Y` to confirm the pixel first.
+1. **Capture and look.** `screenshot out.png` - view it at NATIVE size (do not let the viewer downscale).
+2. **Read coordinates directly** off `out.png` - there is no scale factor to undo.
+3. **Verify before committing:** `screenshot out.png --mark X,Y` and check the crosshair lands on target (`--grid 50` adds a ruler).
+4. **Prefer clicking by label** over guessing pixels: `ocr --grep "Sign in"` then `click <cx> <cy>`, or one-shot `click-text "Sign in"`. `click-text` only sees text OCR can read - low-contrast or placeholder hints (a faint greyed-out search box), icons, and untitled controls are missed and it fails; fall back to reading the pixel off the screenshot and `click X Y`.
+5. **Focus, then type.** A freshly opened window/field often does NOT have keyboard focus. Click into the text field first, THEN `type`. Skipping the click is the #1 reason typed text seems to vanish.
 
-## Typing and keyboard layout
+## Gotchas
 
-`type` sends literal keysyms: each character's keysym is its code point, exactly
-like a standard VNC client. It does no client-side translation. The guest
-keyboard layout is a server-side setting. A layout-aware server (for example
-openvmm, through its `--vnc-keyboard-layout` flag) maps the keysyms into the guest
-layout. When the server's layout matches the guest's, every character types
-correctly, including symbols. Against a server that is not layout-aware, only
-characters whose keysym matches the guest's physical-key position land as expected.
+- **Focus before typing** (see step 5). If text vanishes: screenshot, click the field, type again.
+- **Keyboard layout is server-side, not yours.** You pass the text you want; the client puts each
+  character's Unicode code point on the wire as its keysym (like any VNC client). Your own laptop
+  layout is irrelevant. A layout-aware server (openvmm; on Proxmox the ovm shim derives it from the
+  VM's `keyboard:` key) maps keysyms to the guest layout. If wrong characters land, the SERVER layout
+  is misconfigured - fix it there, never compensate per keystroke on the client.
+- **Sluggish guests drop fast input.** Slow it down: `--delay-scale 2` multiplies every delay, or set
+  individual gaps via `--set vnc.key_up_gap=0.2` (keys: `key_down_hold`, `key_up_gap`, `click_move_gap`,
+  `click_hold`, `click_release_gap`).
+- **A VNC console is a flaky external resource** - it can freeze, drop, or lag mid-session. Verify the
+  screen state before acting on it, retry under a timeout, and never assume a keystroke landed. For the
+  self-healing patterns, see `bitranox:coding-resilience`.
 
-A text field must have keyboard focus before you `type` (see the focus tip
-below).
+## Authentication
 
-## Focus before typing
+- **None security** (an openvmm/hypervisor console on localhost - the typical Proxmox case) needs nothing.
+- **VNC password:** pass it via the `VNC_REMOTE_CONTROL_PASSWORD` env var (which `--password` reads by
+  default), NOT on the command line - a password in argv is visible in `ps`. TLS/VeNCrypt and Apple
+  Remote Desktop auth are not supported. (demand gated)
 
-This is the most common typing failure. After you open or launch a window
-(taskbar search, the Run box, an application), it often does NOT have keyboard
-focus, so `type` goes nowhere. Concrete lesson: a freshly-opened editor showed
-nothing typed until it was clicked to focus. Always click into the actual text
-field first, then `type`. If text seems to vanish, re-screenshot, click the
-field, and type again.
+```bash
+VNC_REMOTE_CONTROL_PASSWORD=secret vnc-remote-control --port 5901 key enter
+```
 
-## Practical tips
+## Proxmox / no-network VMs
 
-- Focus before typing: click the target field, then `type` (see above).
-- One observable step at a time: act, then screenshot to confirm.
-- Boot screens and dialogs: screenshot first to see the current state (spinner,
-  login, BSOD, dialog) before deciding what to send.
-- If OCR misreads small text, take the screenshot and read the coordinates
-  yourself off the native image.
-- If input lands in the wrong place or not at all right after a menu, dialog, or
-  search panel opens, the UI was probably still animating. Slow the input with
-  `--delay-scale 2` (or higher) and retry.
+The VM's console is a VNC/RFB server on the host. Reach it directly, or SSH-tunnel to the console
+port (see `bitranox:compuse-ssh`). `openvmm` is the ideal layout-aware target so arbitrary
+characters and non-US layouts type reliably; plainer VNC servers still work for any text a fixed
+(usually US) layout can produce.
