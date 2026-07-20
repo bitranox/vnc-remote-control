@@ -193,3 +193,5 @@ prompts.md
 # Python virtual environments (managed by bmk)
 .venv-win/
 .venv-bmk/
+# bitranox curated memory (local; CLAUDE.local.md @imports it)
+CLAUDE.local.md
