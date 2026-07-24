@@ -2,16 +2,19 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import lib_cli_exit_tools
 import pytest
-from click.testing import CliRunner, Result
 
 from vnc_remote_control import __init__conf__
 from vnc_remote_control.adapters import cli as cli_mod
 from vnc_remote_control.composition import build_production
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from click.testing import CliRunner, Result
 
 
 @pytest.mark.os_agnostic

@@ -7,12 +7,14 @@ object. Unspecified keys fall back to the tuned defaults.
 
 from __future__ import annotations
 
-from typing import cast
+from typing import TYPE_CHECKING, cast
 
-from lib_layered_config import Config
 from pydantic import BaseModel, ConfigDict, Field
 
 from ...domain.timing import RfbTimings
+
+if TYPE_CHECKING:
+    from lib_layered_config import Config
 
 _DEFAULTS = RfbTimings()
 

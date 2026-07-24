@@ -7,7 +7,7 @@ live server. KeyEvent format is ``>BBHI`` = (msg_type=4, down_flag, pad=0, keysy
 from __future__ import annotations
 
 import struct
-from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from cryptography.hazmat.decrepit.ciphers.algorithms import TripleDES
@@ -15,6 +15,9 @@ from cryptography.hazmat.primitives.ciphers import Cipher, modes
 
 from vnc_remote_control.adapters.rfb import RfbClient, RfbError
 from vnc_remote_control.domain import keymap
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 #: RFB security type byte for VNC password authentication.
 _VNC_AUTH = 2

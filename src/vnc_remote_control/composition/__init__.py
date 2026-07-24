@@ -85,7 +85,9 @@ def build_testing(*, spy: EmailSpy | None = None) -> AppServices:
     Returns:
         AppServices container with in-memory adapters.
     """
-    from ..adapters.memory import (
+    # Deferred: keeps the in-memory test adapters out of the production import
+    # graph (build_production() never touches this module-load path).
+    from ..adapters.memory import (  # noqa: PLC0415 - intentional lazy load, testing-only adapters
         EmailSpy,
         deploy_configuration_in_memory,
         display_config_in_memory,
@@ -110,19 +112,19 @@ def build_testing(*, spy: EmailSpy | None = None) -> AppServices:
 
 
 __all__ = [
-    # Configuration
-    "get_config",
-    "get_default_config_path",
-    "deploy_configuration",
-    "display_config",
-    # Email
-    "send_email",
-    "send_notification",
-    "load_email_config_from_dict",
-    # Logging
-    "init_logging",
     # Composition
     "AppServices",
     "build_production",
     "build_testing",
+    "deploy_configuration",
+    "display_config",
+    # Configuration
+    "get_config",
+    "get_default_config_path",
+    # Logging
+    "init_logging",
+    "load_email_config_from_dict",
+    # Email
+    "send_email",
+    "send_notification",
 ]

@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from lib_layered_config import Config
 
 from vnc_remote_control.adapters import cli as cli_mod
 from vnc_remote_control.adapters import ocr
@@ -14,6 +12,11 @@ from vnc_remote_control.adapters.cli.commands import vnc as vnc_cmd
 from vnc_remote_control.adapters.config.vnc import build_rfb_timings
 from vnc_remote_control.composition import build_production
 from vnc_remote_control.domain.timing import RfbTimings
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from lib_layered_config import Config
 
 
 class _FakeClient:

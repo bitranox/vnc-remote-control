@@ -12,7 +12,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import rich_click as click
-from lib_layered_config import Config
 
 from vnc_remote_control import __init__conf__
 from vnc_remote_control.adapters.config.overrides import apply_overrides
@@ -22,6 +21,8 @@ from .context import apply_traceback_preferences, store_cli_context
 from .typed_click import option, version_option
 
 if TYPE_CHECKING:
+    from lib_layered_config import Config
+
     from vnc_remote_control.composition import AppServices
 
 
@@ -111,6 +112,7 @@ def _apply_cli_overrides(config: Config, set_overrides: tuple[str, ...]) -> Conf
 @click.pass_context
 def cli(
     ctx: click.Context,
+    *,
     traceback: bool,
     profile: str | None,
     set_overrides: tuple[str, ...],
@@ -165,7 +167,7 @@ def cli(
 # the ``cli`` group, commands register themselves onto it, and those command
 # modules import from package ancestors. This is the standard Click pattern.
 def _register_commands() -> None:
-    from .commands import (
+    from .commands import (  # noqa: PLC0415 - circular-import break, see comment above
         cli_click,
         cli_click_text,
         cli_config,

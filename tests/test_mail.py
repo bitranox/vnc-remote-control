@@ -8,12 +8,10 @@ email operations.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
-from typing import IO
+from typing import IO, TYPE_CHECKING
 from unittest.mock import patch
 
 import pytest
-from btx_lib_mail.lib_mail import DeliveryOptions
 from pydantic import ValidationError as PydanticValidationError
 
 from vnc_remote_control.adapters.email.sender import (
@@ -23,6 +21,11 @@ from vnc_remote_control.adapters.email.sender import (
     send_notification,
 )
 from vnc_remote_control.domain.errors import ConfigurationError, DeliveryError
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from btx_lib_mail.lib_mail import DeliveryOptions
 
 
 @dataclass(frozen=True)

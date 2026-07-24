@@ -6,14 +6,10 @@ the CLI, and delivered to deploy_configuration.
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
-from click.testing import CliRunner, Result
-from lib_layered_config import Config
 
 from vnc_remote_control.adapters import cli as cli_mod
 from vnc_remote_control.adapters.config.permissions import (
@@ -23,6 +19,13 @@ from vnc_remote_control.adapters.config.permissions import (
 )
 from vnc_remote_control.composition import AppServices, build_production
 from vnc_remote_control.domain.enums import DeployTarget
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+    from pathlib import Path
+
+    from click.testing import CliRunner, Result
+    from lib_layered_config import Config
 
 # ======================== Permission Settings Loader Tests ========================
 

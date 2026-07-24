@@ -6,6 +6,33 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [0.2.3] 2026-07-24 13:52:16
+
+### Fixed
+- Latest ruff now enforces `PLR0917` (too many positional arguments): CLI command
+  callbacks and the internal `_execute_deploy` helper take their options
+  keyword-only, matching how Click already invokes them.
+- A doctest in `permissions.get_modes_for_target` broke after `TC003` moved
+  `DeployTarget` behind `TYPE_CHECKING`; the doctest now imports it directly so it
+  stays runnable outside type-checking.
+
+### Changed
+- Removed the blanket `[tool.ruff.lint].ignore` list (`RUF002`, `RUF022`,
+  `PLC0415`, `TC001`, `TC002`, `TC003`, `TC006`) and fixed every violation at the
+  root instead: sorted `__all__` (`RUF022`), moved type-only imports under
+  `TYPE_CHECKING` or quoted `cast()` expressions (`TC001`/`TC002`/`TC003`/`TC006`),
+  and replaced ambiguous en-dashes in docstrings with ASCII hyphens (`RUF002`).
+- Added `[tool.ruff.lint.flake8-type-checking].runtime-evaluated-base-classes`
+  for `pydantic.BaseModel` so Pydantic field-type imports stay available at
+  runtime instead of being pushed into `TYPE_CHECKING`.
+- `PLC0415` (deferred imports): moved trivial deferred imports in
+  `adapters/cli/commands/logging.py` and `adapters/cli/main.py` to module top;
+  kept the genuine circular-import break in `adapters/cli/root.py` and the
+  intentional lazy load of in-memory test adapters in
+  `composition/__init__.py`, both now annotated with `# noqa: PLC0415` and a
+  reason. Test-only deferred imports are now covered by a `tests/*.py`
+  per-file-ignore instead of being fixed one by one.
+
 ## [0.2.2] 2026-06-22
 
 ### Documentation
