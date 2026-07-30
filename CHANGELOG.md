@@ -6,6 +6,17 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.0.3] - 2026-07-30
+
+### Changed
+
+- **Version line raised past the shipped skill's.** The Claude Code plugin in
+  `.claude-plugin/plugin.json` was at 1.0.2 while the package was at 0.2.3, because the skill
+  ships more often than the package it documents. bmk now slaves the plugin version to the
+  package version, and that sync must never move an install backward, so the package version
+  is raised past it once here. No functional change; the crossing of 1.0 is a consequence of
+  that alignment, not a stability claim made on its own.
+
 ## [0.2.3] 2026-07-24 13:52:16
 
 ### Fixed
