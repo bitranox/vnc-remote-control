@@ -1,6 +1,6 @@
 [project]
 name = "vnc_remote_control"
-version = "1.0.3"
+version = "1.0.4"
 description = "Layout-aware VNC/RFB remote control CLI: type, key, click, screenshot, against any VNC/RFB server."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -8,8 +8,8 @@ dependencies = [
     "rich-click>=1.9.8",
     "lib_cli_exit_tools>=2.3.4",
     "lib_log_rich>=6.3.6",
-    "lib_layered_config>=5.6.1",
-    "btx_lib_mail>=1.5.1",
+    "lib_layered_config>=5.6.2",
+    "btx_lib_mail>=1.5.2",
     "pydantic>=2.13.4",
     "orjson>=3.11.9",
     "pillow>=12.3.0",
@@ -77,7 +77,7 @@ dev = [
   "wheel>=0.47.0",               # CVE-2025-24049
   "pynacl>=1.6.2",               # CVE-2025-69277
   "urllib3>=2.7.0",              # CVE-2025-66471, CVE-2025-66418
-  "virtualenv>=21.7.0",         # CVE-2025-22702
+  "virtualenv>=21.7.1",         # CVE-2025-22702
 ]
 
 [project.scripts]
