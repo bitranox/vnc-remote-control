@@ -112,8 +112,10 @@ raise_on_invalid_recipient = true
 # Purpose: Whitelist of allowed file extensions for attachments
 # Type: array of strings (e.g., [".pdf", ".txt", ".docx"]) or empty for blacklist mode
 # Default: [] (empty = use blacklist mode with blocked_extensions)
-# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__ALLOWED_EXTENSIONS=.pdf,.txt,.docx
-# .env: EMAIL__ATTACHMENTS__ALLOWED_EXTENSIONS=.pdf,.txt,.docx
+# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__ALLOWED_EXTENSIONS=[".pdf",".txt",".docx"]
+# .env: EMAIL__ATTACHMENTS__ALLOWED_EXTENSIONS=[".pdf",".txt",".docx"] (unquoted)
+# A comma-separated value is NOT a list: it arrives as one string and is refused
+# (the command exits 78 naming the key) rather than read as "not configured".
 # Note: When set, ONLY these extensions are allowed (whitelist mode)
 #
 # Whitelist Mode Examples (recommended for maximum security):
@@ -128,8 +130,10 @@ allowed_extensions = []
 # Purpose: Blacklist of blocked file extensions (ignored when allowed_extensions is set)
 # Type: array of strings
 # Default: [] (uses OS-specific dangerous extensions from btx_lib_mail)
-# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__BLOCKED_EXTENSIONS=.exe,.bat,.cmd
-# .env: EMAIL__ATTACHMENTS__BLOCKED_EXTENSIONS=.exe,.bat,.cmd
+# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__BLOCKED_EXTENSIONS=[".exe",".bat",".cmd"]
+# .env: EMAIL__ATTACHMENTS__BLOCKED_EXTENSIONS=[".exe",".bat",".cmd"] (unquoted)
+# A comma-separated value is NOT a list: it arrives as one string and is refused
+# (the command exits 78 naming the key) rather than read as "not configured".
 # Note: Only used when allowed_extensions is empty (blacklist mode)
 #
 # btx_lib_mail Default Blocked Extensions by OS:
@@ -159,8 +163,10 @@ blocked_extensions = []
 # Purpose: Whitelist of directories from which attachments may be read
 # Type: array of strings (absolute paths) or empty for blacklist mode
 # Default: [] (empty = use blacklist mode with blocked_directories)
-# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__ALLOWED_DIRECTORIES=/home/user/attachments,/tmp/exports
-# .env: EMAIL__ATTACHMENTS__ALLOWED_DIRECTORIES=/home/user/attachments,/tmp/exports
+# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__ALLOWED_DIRECTORIES=["/home/user/attachments","/tmp/exports"]
+# .env: EMAIL__ATTACHMENTS__ALLOWED_DIRECTORIES=["/home/user/attachments","/tmp/exports"] (unquoted)
+# A comma-separated value is NOT a list: it arrives as one string and is refused
+# (the command exits 78 naming the key) rather than read as "not configured".
 # Note: When set, attachments MUST reside under one of these directories
 #
 # Whitelist Mode Examples (recommended for maximum security):
@@ -172,8 +178,10 @@ allowed_directories = []
 # Purpose: Blacklist of directories from which attachments cannot be read
 # Type: array of strings (absolute paths)
 # Default: [] (uses OS-specific sensitive directories from btx_lib_mail)
-# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__BLOCKED_DIRECTORIES=/etc,/root
-# .env: EMAIL__ATTACHMENTS__BLOCKED_DIRECTORIES=/etc,/root
+# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__ATTACHMENTS__BLOCKED_DIRECTORIES=["/etc","/root"]
+# .env: EMAIL__ATTACHMENTS__BLOCKED_DIRECTORIES=["/etc","/root"] (unquoted)
+# A comma-separated value is NOT a list: it arrives as one string and is refused
+# (the command exits 78 naming the key) rather than read as "not configured".
 # Note: Only used when allowed_directories is empty (blacklist mode)
 #
 # btx_lib_mail Default Blocked Directories by OS:

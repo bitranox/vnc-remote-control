@@ -6,6 +6,20 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Security
+- **An attachment allow or block list in the wrong form is refused, not dropped.** The
+  `[email.attachments]` lists `allowed_extensions`, `blocked_extensions`, `allowed_directories`
+  and `blocked_directories` read any value that was not a list as "not configured", so a
+  comma-separated environment value (`.pdf,.txt`, which arrives as one string; only a JSON array
+  `[".pdf", ".txt"]` arrives as a list) silently replaced the configured list with btx_lib_mail's
+  defaults: a configured whitelist was lifted, a configured blacklist replaced. Such a value, and
+  a number, boolean or table, is now refused: `send-email` and `send-notification` exit 78 with
+  `Error: Invalid configuration - ... attachment_<key>: expected a list ...`. An empty value
+  (`[]`, an empty or whitespace-only string) still means "not configured". From Python, a tuple
+  is read like a list and a set like a frozenset (an empty one still disables the list).
+  `smtp_hosts` and `recipients` no longer empty a tuple or a non-list value: a tuple is read as a
+  list, a number is refused.
+
 ## [1.0.4] 2026-07-30 18:36:36
 
 ### Changed

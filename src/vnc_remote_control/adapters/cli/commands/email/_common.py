@@ -9,9 +9,10 @@ from __future__ import annotations
 import functools
 import logging
 import os
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, NoReturn, cast
 
 import rich_click as click
+from pydantic import ValidationError
 
 from vnc_remote_control import __init__conf__
 from vnc_remote_control.adapters.email.sender import EmailConfig
@@ -24,7 +25,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from lib_layered_config import Config
-    from pydantic import ValidationError
 
     from vnc_remote_control.application.ports import LoadEmailConfigFromDict
 
@@ -121,9 +121,13 @@ def load_and_validate_email_config(config: Config, loader: LoadEmailConfigFromDi
         EmailConfig with validated SMTP configuration.
 
     Raises:
-        SystemExit: When SMTP hosts are not configured (exit code 78 / CONFIG_ERROR).
+        SystemExit: When the configuration is invalid, or SMTP hosts are not configured
+            (exit code 78 / CONFIG_ERROR either way).
     """
-    email_config = loader(config.as_dict())
+    try:
+        email_config = loader(config.as_dict())
+    except ValidationError as exc:
+        _handle_send_error(exc, "Invalid email configuration", "Invalid configuration", exit_code=ExitCode.CONFIG_ERROR)
 
     if not email_config.smtp_hosts:
         logger.error("No SMTP hosts configured")
@@ -257,7 +261,7 @@ def _handle_send_error(
     *,
     exit_code: ExitCode = ExitCode.GENERAL_ERROR,
     log_traceback: bool = False,
-) -> None:
+) -> NoReturn:
     """Handle errors during send operations.
 
     Args:
