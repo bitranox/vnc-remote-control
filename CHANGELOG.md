@@ -6,6 +6,11 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Fixed
+- **`email.smtp_hosts` and `email.recipients` set to nothing mean not configured.** A bare YAML
+  key or an environment `null` was refused as "Input should be a valid list" for both settings.
+  Both now read `None` as an empty list.
+
 ### Security
 - **An attachment allow or block list in the wrong form is refused, not dropped.** The
   `[email.attachments]` lists `allowed_extensions`, `blocked_extensions`, `allowed_directories`
