@@ -210,7 +210,7 @@ def cli_click_text(ctx: click.Context, pattern: str, min_confidence: float) -> N
         target = ocr.first_match(words, pattern)
         if target is None:
             click.echo(f"no on-screen text matched {pattern!r}", err=True)
-            raise SystemExit(1)
+            ctx.exit(1)
         with _client(ctx) as client:
             client.click(target.cx, target.cy)
     click.echo(f'clicked "{target.text}" at ({target.cx},{target.cy})')

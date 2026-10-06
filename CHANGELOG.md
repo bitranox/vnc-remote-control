@@ -16,6 +16,16 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   API')`. It now starts a quiet runtime (no journald, event log, Graylog or queue; console at ERROR;
   no `.env` loading). Under `build_testing()` a command's `logger.error` line now reaches stderr
   ahead of its `Error:` line.
+- **No more `SystemExit: N` on stderr.** The email and config commands and `click-text` (when no
+  on-screen text matched) raised a bare `SystemExit`, which `main()`'s catch-all branch printed as
+  `SystemExit: 78` (or `: 1`) after the real error message. They now exit through click's context
+  (`ctx.exit`), and `main()` returns the exit code rich_click's `main()` hands back instead of
+  discarding it. Exit codes are unchanged. `typed_click` gains a typed `get_current_context`
+  wrapper for the helpers that have no `ctx` parameter.
+- **A failed send is reported once.** click's `Exit` subclasses `RuntimeError`, so the send-result
+  exit raised inside the delivery `try` was caught again by the `DeliveryError`/`RuntimeError`
+  branch, adding "SMTP delivery failed" to the correct "sending failed". The send result is
+  handled in the `try`'s `else`, and `config-deploy` re-raises an `Exit` before its catch-all.
 
 ### Security
 - **An attachment allow or block list in the wrong form is refused, not dropped.** The
