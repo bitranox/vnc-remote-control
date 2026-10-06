@@ -243,7 +243,9 @@ def test_a_refused_log_variable_still_leaves_logging_running(monkeypatch: pytest
 
 @pytest.mark.os_agnostic
 @pytest.mark.parametrize(
-    "command", [("info",), ("hello",), ("config-deploy", "--target", "user", "--force")], ids=["info", "hello", "deploy"]
+    "command",
+    [("info",), ("hello",), ("config-deploy", "--target", "user", "--force")],
+    ids=["info", "hello", "deploy"],
 )
 def test_a_refused_log_variable_in_the_env_file_leaves_commands_that_do_not_read_the_config_running(
     tmp_path: Path, command: tuple[str, ...]
