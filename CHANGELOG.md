@@ -6,6 +6,11 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Changed
+- **Requires lib_layered_config 7.0.1.** An unquoted `.env` value now converts like the
+  environment layer, so `EMAIL__USE_STARTTLS=false` arrives as the boolean `false` rather than
+  the string `"false"`.
+
 ### Fixed
 - **`email.smtp_hosts` and `email.recipients` set to nothing mean not configured.** A bare YAML
   key or an environment `null` was refused as "Input should be a valid list" for both settings.
