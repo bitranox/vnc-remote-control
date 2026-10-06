@@ -110,9 +110,12 @@ def _ocr_words(host: str, port: int, password: str | None, min_confidence: float
 @click.pass_context
 def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
     """Type a literal string into the guest."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-type", extra={"command": "type"}):
         logger.info("Typing text into guest")
-        with _client(ctx) as client:
+        with rfb as client:
             client.type_text(text)
             if enter:
                 client.press("enter")
@@ -124,9 +127,12 @@ def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
 @click.pass_context
 def cli_key(ctx: click.Context, name: str) -> None:
     """Press a single named key such as enter, tab, or esc."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-key", extra={"command": "key"}):
         logger.info("Pressing named key")
-        with _client(ctx) as client:
+        with rfb as client:
             client.press(name)
     click.echo(f"pressed {name}", err=True)
 
@@ -137,9 +143,12 @@ def cli_key(ctx: click.Context, name: str) -> None:
 @click.pass_context
 def cli_click(ctx: click.Context, x: int, y: int) -> None:
     """Left-click at pixel position X Y."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-click", extra={"command": "click"}):
         logger.info("Clicking at pixel position")
-        with _client(ctx) as client:
+        with rfb as client:
             client.click(x, y)
     click.echo(f"clicked ({x}, {y})", err=True)
 
@@ -157,9 +166,12 @@ def cli_click(ctx: click.Context, x: int, y: int) -> None:
 @click.pass_context
 def cli_screenshot(ctx: click.Context, outfile: str, mark: tuple[int, int] | None, grid: int | None) -> None:
     """Save the native-resolution framebuffer to a PNG file."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-screenshot", extra={"command": "screenshot"}):
         logger.info("Capturing framebuffer screenshot")
-        with _client(ctx) as client:
+        with rfb as client:
             width, height = client.screenshot(outfile, mark=mark, grid=grid)
     # Parseable resolution line on stdout so an LLM can read the native size and
     # trust that screenshot pixels equal click coordinates.

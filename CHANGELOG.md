@@ -67,7 +67,8 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   replaces the file) exit 1 with empty stdout. The root now records the failure
   (`adapters/cli/config_load.py`); `config`, `send-email`, `send-notification` and the VNC
   commands that open a connection with the configured timings (`type`, `key`, `click`,
-  `screenshot`, `click-text`) refuse with exit 78 and one line naming it, while `config-deploy`,
+  `screenshot`, `click-text`) refuse with exit 78 and one line naming it (before they log an
+  action such as "Typing text into guest", which they never take), while `config-deploy`,
   `config-generate-examples`, `ocr`, `info`, `hello` and help still run (`config-deploy` reads
   nothing from that configuration, see the next entry, so `config-deploy --force` replaces the
   broken file). An

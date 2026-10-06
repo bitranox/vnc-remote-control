@@ -101,6 +101,24 @@ def test_a_command_that_reads_the_config_refuses_with_exit_78(
     assert "Traceback" not in result.stderr
 
 
+#: The VNC commands that read the configuration, keyed as in NEEDS_CONFIG.
+_VNC_NEEDS_CONFIG = {name: args for name, args in NEEDS_CONFIG.items() if "--port" in args}
+
+
+@pytest.mark.os_agnostic
+@pytest.mark.parametrize("args", _VNC_NEEDS_CONFIG.values(), ids=_VNC_NEEDS_CONFIG.keys())
+def test_a_vnc_command_refused_for_its_config_logs_no_action(
+    cli_runner: CliRunner, caplog: pytest.LogCaptureFixture, args: list[str]
+) -> None:
+    """A refused command did nothing, so it must not log "Typing text into guest" or the like."""
+    caplog.set_level(logging.INFO, logger=vnc_cmd.logger.name)
+
+    result = cli_runner.invoke(cli_mod.cli, args, obj=_failing_config(ConfigError(BROKEN_TOML)))
+
+    assert result.exit_code == 78, result.output
+    assert [record.getMessage() for record in caplog.records if record.name == vnc_cmd.logger.name] == []
+
+
 @pytest.mark.os_agnostic
 @pytest.mark.parametrize("args", RUNS_WITHOUT_CONFIG.values(), ids=RUNS_WITHOUT_CONFIG.keys())
 def test_a_command_that_does_not_read_the_config_still_runs(cli_runner: CliRunner, args: list[str]) -> None:
