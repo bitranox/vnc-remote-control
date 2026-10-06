@@ -10,6 +10,9 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 - **Requires lib_layered_config 7.0.1.** An unquoted `.env` value now converts like the
   environment layer, so `EMAIL__USE_STARTTLS=false` arrives as the boolean `false` rather than
   the string `"false"`.
+- **`click` is a declared dependency.** The package imports it directly (`adapters/cli/main.py`,
+  `commands/config.py`) but only had it through rich-click. A new test fails when a runtime
+  import is missing from `[project].dependencies`.
 
 ### Fixed
 - **`email.smtp_hosts` and `email.recipients` set to nothing mean not configured.** A bare YAML
