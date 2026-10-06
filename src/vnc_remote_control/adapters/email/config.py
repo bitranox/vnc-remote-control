@@ -226,7 +226,9 @@ class EmailConfig(BaseModel):
         """Convert to btx_lib_mail ConfMail object.
 
         Isolates the adapter dependency on btx_lib_mail types from the
-        rest of the application.
+        rest of the application. The attachment size limit is always passed, None
+        included: in ``ConfMail`` None lifts the limit, while ``send()`` reads a size
+        keyword of None as "use the configured default".
 
         Returns:
             ConfMail instance configured with current settings.
@@ -236,8 +238,10 @@ class EmailConfig(BaseModel):
             >>> conf = config.to_conf_mail()
             >>> conf.smtphosts
             ['smtp.example.com']
+            >>> EmailConfig(attachment_max_size_bytes=0).to_conf_mail().attachment_max_size_bytes is None
+            True
         """
-        # Build kwargs, omitting None values to use library defaults
+        # The size limit is passed even when None: in ConfMail that lifts the limit.
         kwargs: dict[str, Any] = {
             "smtphosts": self.smtp_hosts,
             "smtp_username": self.smtp_username,
@@ -248,10 +252,11 @@ class EmailConfig(BaseModel):
             "raise_on_invalid_recipient": self.raise_on_invalid_recipient,
             "attachment_allow_symlinks": self.attachment_allow_symlinks,
             "attachment_raise_on_security_violation": self.attachment_raise_on_security_violation,
+            "attachment_max_size_bytes": self.attachment_max_size_bytes,
         }
 
-        # Only pass attachment security settings when explicitly configured
-        # (None = use btx_lib_mail's OS-specific defaults)
+        # Only pass the attachment lists when explicitly configured
+        # (None = use btx_lib_mail's defaults)
         if self.attachment_allowed_extensions is not None:
             kwargs["attachment_allowed_extensions"] = self.attachment_allowed_extensions
         if self.attachment_blocked_extensions is not None:
@@ -260,8 +265,6 @@ class EmailConfig(BaseModel):
             kwargs["attachment_allowed_directories"] = self.attachment_allowed_directories
         if self.attachment_blocked_directories is not None:
             kwargs["attachment_blocked_directories"] = self.attachment_blocked_directories
-        if self.attachment_max_size_bytes is not None:
-            kwargs["attachment_max_size_bytes"] = self.attachment_max_size_bytes
 
         return ConfMail(**kwargs)
 

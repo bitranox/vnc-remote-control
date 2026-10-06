@@ -146,6 +146,10 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   (all target files already exist)" and "Use --force to overwrite existing configuration files"
   although `--force` was given. It now says "No files were written: every target file is already
   identical to the bundled one." Without `--force` the message is unchanged.
+- **`[email.attachments] max_size_bytes = 0` disables the size check, as documented.** The 0 was
+  read as "no limit" and then handed to btx_lib_mail as a missing setting, which the library
+  fills with its default, so an attachment over 25 MiB was still refused. The lifted limit now
+  reaches the library as a setting; `EmailConfig.to_conf_mail()` carries it too.
 - **The documented `.env` and environment syntax for lists and tables works.**
   `defaultconfig.d/50-mail.toml` and `defaultconfig.d/90-logging.toml` showed comma-separated lists
   (`EMAIL__SMTP_HOSTS=a:587,b:587`, `EMAIL__RECIPIENTS=...`) and `LEVEL=style` / `field=regex`

@@ -13,7 +13,7 @@ from typing import IO, TYPE_CHECKING
 import pytest
 from btx_lib_mail.lib_mail import AttachmentSecurityError
 
-from vnc_remote_control.adapters.email.sender import EmailConfig, send_email
+from vnc_remote_control.adapters.email.sender import EmailConfig, load_email_config_from_dict, send_email
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -23,6 +23,7 @@ if TYPE_CHECKING:
 #: The library's default caps on one send.
 _RECIPIENT_MAX_COUNT = 1000
 _ATTACHMENT_MAX_COUNT = 100
+_LIBRARY_DEFAULT_MAX_SIZE_BYTES = 26_214_400
 
 
 class _CountingTransport:
@@ -115,5 +116,57 @@ def test_more_attachments_than_the_library_allows_are_refused_before_any_deliver
             attachments=attachments,
             transport=transport,
         )
+
+    assert transport.deliveries == 0
+
+
+@pytest.mark.os_agnostic
+def test_a_size_limit_of_zero_lifts_the_library_default(tmp_path: Path) -> None:
+    """``[email.attachments] max_size_bytes = 0`` disables the size check, as the shipped file says.
+
+    ``send()`` reads a size limit of None as "use the configured default" (25 MiB), so the
+    lifted limit has to reach the library as a setting rather than as a missing keyword.
+    """
+    config = load_email_config_from_dict(
+        {
+            "email": {
+                "smtp_hosts": ["smtp.test.com:587"],
+                "from_address": "sender@test.com",
+                "attachments": {"max_size_bytes": 0, "blocked_directories": ["/nonexistent-blocked-dir"]},
+            }
+        }
+    )
+    attachment = tmp_path / "large.txt"
+    with attachment.open("wb") as handle:
+        # Sparse where the file system allows it: the size is what the check reads.
+        handle.truncate(_LIBRARY_DEFAULT_MAX_SIZE_BYTES + 1)
+    transport = _CountingTransport()
+
+    assert config.attachment_max_size_bytes is None
+    assert (
+        send_email(config=config, recipients="to@test.com", subject="s", attachments=[attachment], transport=transport)
+        is True
+    )
+    assert transport.deliveries == 1
+
+
+@pytest.mark.os_agnostic
+def test_a_configured_size_limit_still_refuses_a_larger_attachment(tmp_path: Path) -> None:
+    """Control: the same send with a limit below the file size is refused."""
+    config = load_email_config_from_dict(
+        {
+            "email": {
+                "smtp_hosts": ["smtp.test.com:587"],
+                "from_address": "sender@test.com",
+                "attachments": {"max_size_bytes": 10, "blocked_directories": ["/nonexistent-blocked-dir"]},
+            }
+        }
+    )
+    attachment = tmp_path / "small.txt"
+    attachment.write_text("more than ten bytes")
+    transport = _CountingTransport()
+
+    with pytest.raises(AttachmentSecurityError):
+        send_email(config=config, recipients="to@test.com", subject="s", attachments=[attachment], transport=transport)
 
     assert transport.deliveries == 0

@@ -9,7 +9,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from btx_lib_mail.lib_mail import Transport
+from btx_lib_mail.lib_mail import ConfMail, Transport
 from btx_lib_mail.lib_mail import send as btx_send
 
 from vnc_remote_control.domain.errors import ConfigurationError, DeliveryError
@@ -71,6 +71,24 @@ def _build_credentials(config: EmailConfig) -> tuple[str, str] | None:
     if config.smtp_username is not None and config.smtp_password is not None:
         return (config.smtp_username, config.smtp_password)
     return None
+
+
+def _size_limit_settings(config: EmailConfig) -> ConfMail:
+    """The library settings that carry the configured attachment size limit, a lifted one included.
+
+    ``send()`` reads ``attachment_max_size_bytes=None`` as "use the settings' limit", which is
+    25 MiB by default, so ``max_size_bytes = 0`` (no limit, stored as None) cannot travel as
+    that keyword. In ``ConfMail`` None lifts the limit; every other setting keeps the library's
+    default here and is passed to ``send()`` as its own keyword, which wins over these settings.
+
+    Example:
+        >>> from vnc_remote_control.adapters.email.config import EmailConfig
+        >>> _size_limit_settings(EmailConfig(attachment_max_size_bytes=0)).attachment_max_size_bytes is None
+        True
+        >>> _size_limit_settings(EmailConfig()).attachment_max_size_bytes
+        26214400
+    """
+    return ConfMail(attachment_max_size_bytes=config.attachment_max_size_bytes)
 
 
 def _resolve_sender(config: EmailConfig, from_address: str | None) -> str:
@@ -216,6 +234,7 @@ def send_email(
             attachment_raise_on_security_violation=config.attachment_raise_on_security_violation,
             raise_on_missing_attachments=config.raise_on_missing_attachments,
             raise_on_invalid_recipient=config.raise_on_invalid_recipient,
+            config=_size_limit_settings(config),
             transport=transport,
         )
     except RuntimeError as exc:
