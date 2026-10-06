@@ -10,6 +10,12 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 - **`email.smtp_hosts` and `email.recipients` set to nothing mean not configured.** A bare YAML
   key or an environment `null` was refused as "Input should be a valid list" for both settings.
   Both now read `None` as an empty list.
+- **`build_testing()` can run a command.** The in-memory logging initializer was a no-op while every
+  command binds job context onto the lib_log_rich runtime, so any command under the testing
+  composition raised `RuntimeError('lib_log_rich.init() must be called before using the logging
+  API')`. It now starts a quiet runtime (no journald, event log, Graylog or queue; console at ERROR;
+  no `.env` loading). Under `build_testing()` a command's `logger.error` line now reaches stderr
+  ahead of its `Error:` line.
 
 ### Security
 - **An attachment allow or block list in the wrong form is refused, not dropped.** The
