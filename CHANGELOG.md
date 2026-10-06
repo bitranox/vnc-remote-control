@@ -134,6 +134,12 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   level: 'bogus'`, which may name neither the variable nor where it was set. A refused
   `[lib_log_rich]` value leaves every valid `LOG_*` variable in force for the fallback: only a
   refused variable hides them.
+- **The testing composition ignores the developer's `LOG_*` variables.** `build_testing()`'s
+  logging runtime (`init_logging_in_memory`) now starts with every `LOG_*` variable hidden and
+  puts them back afterwards. A `LOG_CONSOLE_LEVEL=bogus` in the shell running the tests made
+  every command under `build_testing()` fail with `ValueError: Unknown log level: 'bogus'`, and a
+  valid one changed the quiet test runtime. Production logging is unaffected. The helper is
+  public as `adapters.logging.setup.log_variables_hidden`.
 - **The documented `.env` and environment syntax for lists and tables works.**
   `defaultconfig.d/50-mail.toml` and `defaultconfig.d/90-logging.toml` showed comma-separated lists
   (`EMAIL__SMTP_HOSTS=a:587,b:587`, `EMAIL__RECIPIENTS=...`) and `LEVEL=style` / `field=regex`
