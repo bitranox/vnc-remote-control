@@ -7,6 +7,14 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 ## [Unreleased]
 
 ### Changed
+- **Requires `btx_lib_mail>=4.0.0`.** What a user of `send-email` and `send-notification` can
+  see: with no `[email.attachments] blocked_extensions` configured, the Windows dangerous
+  extensions (`.exe`, `.bat`, `.ps1`, ...) are refused on Linux and macOS too, and the POSIX ones
+  (`.sh`, `.py`, ...) on Windows; one send to more than 1000 recipients or with more than 100
+  attachments is refused before anything is delivered (exit 22); a
+  sender or recipient longer than RFC 5321 allows, and a subject with a control character or
+  over 4096 characters, are refused. The shipped `50-mail.toml` names the library's default lists
+  instead of listing extensions and directories the library does not use.
 - **Requires lib_layered_config 7.0.1.** An unquoted `.env` value now converts like the
   environment layer, so `EMAIL__USE_STARTTLS=false` arrives as the boolean `false` rather than
   the string `"false"`.
