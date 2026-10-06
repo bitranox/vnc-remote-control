@@ -19,13 +19,28 @@ TracebackState = tuple[bool, bool]
 
 @dataclass(slots=True)
 class CLIContext:
-    """Typed CLI context for Click subcommand access."""
+    """Typed CLI context for Click subcommand access.
+
+    Attributes:
+        traceback: Whether verbose tracebacks were requested.
+        config: The loaded layered configuration; empty when ``config_error`` is set, so a
+            command that reads it asks through ``config_load.require_config``.
+        services: All application services from the composition layer.
+        profile: Optional configuration profile name.
+        set_overrides: Raw ``--set`` strings, reapplied when a subcommand reloads the
+            configuration with another profile.
+        env_file: The root's ``--env-file``, for the same reload.
+        config_error: Why the configuration could not be loaded, None when it loaded. The
+            root records the exception; each command that reads the configuration reports it.
+    """
 
     traceback: bool
     config: Config
     services: AppServices
     profile: str | None = None
     set_overrides: tuple[str, ...] = ()
+    env_file: str | None = None
+    config_error: Exception | None = None
     #: RFB server host for the VNC subcommands (global ``--host`` option).
     host: str = "127.0.0.1"
     #: RFB server TCP port for the VNC subcommands (global ``--port`` option);
@@ -48,6 +63,8 @@ def store_cli_context(
     services: AppServices,
     profile: str | None = None,
     set_overrides: tuple[str, ...] = (),
+    env_file: str | None = None,
+    config_error: Exception | None = None,
     host: str = "127.0.0.1",
     port: int | None = None,
     password: str | None = None,
@@ -63,6 +80,12 @@ def store_cli_context(
         profile: Optional configuration profile name.
         set_overrides: Raw ``--set`` override strings for reapplication when
             subcommands reload config with a different profile.
+        env_file: The root's ``--env-file``, for the same reload.
+        config_error: Why the configuration could not be loaded, None when it loaded.
+        host: RFB server host for the VNC subcommands.
+        port: RFB server TCP port for the VNC subcommands, None when not given.
+        password: VNC password, None for None-security servers only.
+        delay_scale: Multiplier applied to every RFB event delay.
 
     Example:
         >>> from click.testing import CliRunner
@@ -82,6 +105,8 @@ def store_cli_context(
         services=services,
         profile=profile,
         set_overrides=set_overrides,
+        env_file=env_file,
+        config_error=config_error,
         host=host,
         port=port,
         password=password,

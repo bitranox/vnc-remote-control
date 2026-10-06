@@ -10,6 +10,13 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 - **Requires lib_layered_config 7.0.1.** An unquoted `.env` value now converts like the
   environment layer, so `EMAIL__USE_STARTTLS=false` arrives as the boolean `false` rather than
   the string `"false"`.
+- **Exit code change: an invalid `--profile` name exits 2.** A name such as `../x` given to the
+  root's `--profile` or to `config --profile` escaped as a `ValueError` (exit 22, `info` and
+  `hello` included), and given to `config-deploy --profile` failed as "Failed to deploy
+  configuration" (exit 1). All three are now usage errors (exit 2). A profile FILE that does not
+  load exits 78.
+- **Exit code change: a configuration that does not load exits 78** for the commands that read it
+  (see Fixed), where it used to exit 1 from every command.
 - **`click` is a declared dependency.** The package imports it directly (`adapters/cli/main.py`,
   `commands/config.py`) but only had it through rich-click. A new test fails when a runtime
   import is missing from `[project].dependencies`.
@@ -34,6 +41,23 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   exit raised inside the delivery `try` was caught again by the `DeliveryError`/`RuntimeError`
   branch, adding "SMTP delivery failed" to the correct "sending failed". The send result is
   handled in the `try`'s `else`, and `config-deploy` re-raises an `Exit` before its catch-all.
+- **A broken configuration file no longer disables every command.** The root group loaded the
+  configuration before any subcommand option was parsed and let a load error escape, so a
+  malformed `config.toml` made every command, `--help` and `config-deploy` (the command that
+  replaces the file) exit 1 with empty stdout. The root now records the failure
+  (`adapters/cli/config_load.py`); `config`, `send-email`, `send-notification` and the VNC
+  commands that open a connection with the configured timings (`type`, `key`, `click`,
+  `screenshot`, `click-text`) refuse with exit 78 and one line naming it, while `config-deploy`
+  (with a warning), `config-generate-examples`, `ocr`, `info`, `hello` and help still run. An
+  unreadable file takes the same path, and so does an `--env-file` that is not UTF-8 (the line
+  names the file). `--traceback` prints the loader's chained traceback before the line. Any other
+  exception from the loader is a bug and propagates as one.
+- **Command-line mistakes are usage errors, checked before loading.** A malformed `--set` or an
+  invalid `--profile` name is refused with exit 2 for every command, `info` and `hello` included,
+  so a broken file cannot hide it. So are two `--set` values that give one key a value and put a
+  key under it (`--set a.b=1 --set a.b.c=2`), which escaped as a `TypeError` (exit 22) in one order
+  and silently dropped the earlier value in the other. `config --profile X` reloads with the
+  root's `--env-file` instead of searching for another `.env`.
 
 ### Security
 - **An attachment allow or block list in the wrong form is refused, not dropped.** The

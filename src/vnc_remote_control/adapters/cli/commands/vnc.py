@@ -26,6 +26,7 @@ import rich_click as click
 from ... import ocr
 from ...config.vnc import build_rfb_timings
 from ...rfb import RfbClient, RfbError
+from ..config_load import require_config
 from ..constants import CLICK_CONTEXT_SETTINGS
 from ..context import get_cli_context
 from ..typed_click import argument, option
@@ -48,11 +49,15 @@ def _client(ctx: click.Context) -> RfbClient:
     """Build an RfbClient for the configured server with the configured timings.
 
     Event timings come from the ``[vnc]`` config section, scaled by the global
-    ``--delay-scale`` option.
+    ``--delay-scale`` option. The client is not connected until it is entered.
+
+    Raises:
+        click.exceptions.Exit: The configuration could not be loaded (exit 78): the
+            timings would otherwise silently fall back to the defaults.
     """
     host, port, password = _server(ctx)
     cli_ctx = get_cli_context(ctx)
-    timings = build_rfb_timings(cli_ctx.config).scaled(cli_ctx.delay_scale)
+    timings = build_rfb_timings(require_config(ctx, cli_ctx)).scaled(cli_ctx.delay_scale)
     return RfbClient(host, port, password=password, timings=timings)
 
 
@@ -204,6 +209,8 @@ def cli_ocr(ctx: click.Context, grep: str | None, min_confidence: float) -> None
 def cli_click_text(ctx: click.Context, pattern: str, min_confidence: float) -> None:
     """OCR the screen and click the first word matching a pattern (requires tesseract)."""
     host, port, password = _server(ctx)
+    # Built before the OCR pass so a configuration that did not load refuses up front.
+    clicker = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-click-text", extra={"command": "click-text"}):
         logger.info("Clicking on-screen text by pattern")
         words = _ocr_words(host, port, password, min_confidence)
@@ -211,7 +218,7 @@ def cli_click_text(ctx: click.Context, pattern: str, min_confidence: float) -> N
         if target is None:
             click.echo(f"no on-screen text matched {pattern!r}", err=True)
             ctx.exit(1)
-        with _client(ctx) as client:
+        with clicker as client:
             client.click(target.cx, target.cy)
     click.echo(f'clicked "{target.text}" at ({target.cx},{target.cy})')
 
