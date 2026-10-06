@@ -122,6 +122,18 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   its defaults, the commands that read the configuration refuse with exit 78 and one line per
   problem (`lib_log_rich.rate_limit: Input should be a valid tuple`), and the other commands run.
   `InvalidLoggingConfigError` (a `ConfigurationError`) is what the logging setup raises for it.
+- **A refused `LOG_*` variable no longer disables every command (exit code change).** A value
+  lib_log_rich refuses in a `LOG_*` variable, set in the environment or in the `.env` logging
+  reads (`LOG_CONSOLE_LEVEL=bogus`, also in the `--env-file`), made every command, `info`,
+  `hello` and `config-deploy` included, exit 22 with `ValueError: Unknown log level: 'bogus'`.
+  Logging now falls back to its defaults; when the refused setting is a `LOG_*` variable, that
+  start hides every `LOG_*` variable (and puts each back afterwards), since lib_log_rich reads
+  them on every start. Only the commands that read the configuration (`config`, `send-email`,
+  `send-notification`, `type`, `key`, `click`, `screenshot`, `click-text`) exit 78; the others
+  run with exit 0. The 78 carries lib_log_rich's own message, `Error: lib_log_rich: Unknown log
+  level: 'bogus'`, which may name neither the variable nor where it was set. A refused
+  `[lib_log_rich]` value leaves every valid `LOG_*` variable in force for the fallback: only a
+  refused variable hides them.
 - **The documented `.env` and environment syntax for lists and tables works.**
   `defaultconfig.d/50-mail.toml` and `defaultconfig.d/90-logging.toml` showed comma-separated lists
   (`EMAIL__SMTP_HOSTS=a:587,b:587`, `EMAIL__RECIPIENTS=...`) and `LEVEL=style` / `field=regex`
