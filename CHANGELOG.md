@@ -146,7 +146,9 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   pairs, but a comma-separated value arrives as ONE string in both layers: one bogus SMTP host, or
   a logging table that is refused. They now show a JSON array or object (unquoted in `.env`,
   shell-quoted in the environment) or one key per entry (`EMAIL__SMTP_HOSTS__0=...`), and say how
-  an unquoted value converts.
+  an unquoted value converts. `lib_log_rich.rate_limit` and `lib_log_rich.graylog_endpoint` were
+  shown as `100:60` and `graylog.example.com:12201`, strings that are refused (exit 78); they now
+  show `[100,60]` and `["graylog.example.com",12201]`.
 
 ### Security
 - **`config-deploy` refuses unsafe and malformed modes.** `--dir-mode -1` passed the unbounded
