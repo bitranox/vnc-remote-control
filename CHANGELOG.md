@@ -24,6 +24,11 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   `--dir-mode`/`--file-mode` use the library's wording ("unsafe directory mode 0o777: group
   write (0o020); world write (0o002)"), and a zero-padded mode such as `0000750` is accepted as
   `0o750`.
+- **Requires python-dotenv** (already installed through lib_log_rich): the logging setup reads
+  the `LOG_*` lines of a `.env` itself. **`InitLogging` takes `dotenv_path`**: the port is
+  `init_logging(config, *, dotenv_path=None)`, and a logging double needs the keyword.
+- **Exit code change: an invalid `[lib_log_rich]` value exits 78, no longer 22**, and only for the
+  commands that read the configuration (see Fixed); the others now run.
 - **`click` is a declared dependency.** The package imports it directly (`adapters/cli/main.py`,
   `commands/config.py`) but only had it through rich-click. A new test fails when a runtime
   import is missing from `[project].dependencies`.
@@ -91,6 +96,24 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   `--dir-mode` or `--file-mode` is a usage error (exit 2). The report says "(permissions not set)"
   only for an explicit `--no-permissions`, and "Deployed configuration" is logged after the
   deploy rather than "Deploying configuration" before it.
+- **A `.env` reaches logging and nothing else.** The logging setup called lib_log_rich's
+  `enable_dotenv()`, which copied every line of the nearest `.env` into the process environment, so
+  a later configuration load (`config --profile`, the deploy's permission read) took an
+  app-prefixed `.env` line for the environment layer: a prefixed
+  `..._DEFAULT_PERMISSIONS__USER_FILE=400` in the working directory refused `config-deploy` even
+  under `--env-file`. Logging now copies only the `LOG_*` lines, never over a variable that is
+  already set, and reads them from the `--env-file` when one is given; otherwise from the nearest
+  `.env` up to the project root, without changing directory and passing over a directory it cannot
+  read. A `.env` that is not UTF-8 no longer stops logging from starting. Other `.env` lines
+  (`DEVELOPMENT_MODE=1` included) no longer reach the environment; set such a variable in the
+  environment itself.
+- **An invalid `[lib_log_rich]` value no longer disables every command.** A value lib_log_rich
+  refuses (`rate_limit = "100:60"`, `queue_maxsize = 0`, an unknown `console_level`) exited 22
+  with pydantic's multi-line report from every command, `config-deploy --force` and the VNC
+  commands included. It is now a configuration failure like a broken file: logging starts with
+  its defaults, the commands that read the configuration refuse with exit 78 and one line per
+  problem (`lib_log_rich.rate_limit: Input should be a valid tuple`), and the other commands run.
+  `InvalidLoggingConfigError` (a `ConfigurationError`) is what the logging setup raises for it.
 - **The documented `.env` and environment syntax for lists and tables works.**
   `defaultconfig.d/50-mail.toml` and `defaultconfig.d/90-logging.toml` showed comma-separated lists
   (`EMAIL__SMTP_HOSTS=a:587,b:587`, `EMAIL__RECIPIENTS=...`) and `LEVEL=style` / `field=regex`
