@@ -141,6 +141,11 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   every command under `build_testing()` fail with `ValueError: Unknown log level: 'bogus'`, and a
   valid one changed the quiet test runtime. Production logging is unaffected. The helper is
   public as `adapters.logging.setup.log_variables_hidden`.
+- **`config-deploy --force` with nothing to write no longer tells the user to use `--force`.**
+  When every target file already held the bundled content it printed "No files were created
+  (all target files already exist)" and "Use --force to overwrite existing configuration files"
+  although `--force` was given. It now says "No files were written: every target file is already
+  identical to the bundled one." Without `--force` the message is unchanged.
 - **The documented `.env` and environment syntax for lists and tables works.**
   `defaultconfig.d/50-mail.toml` and `defaultconfig.d/90-logging.toml` showed comma-separated lists
   (`EMAIL__SMTP_HOSTS=a:587,b:587`, `EMAIL__RECIPIENTS=...`) and `LEVEL=style` / `field=regex`
