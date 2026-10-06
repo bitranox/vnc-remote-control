@@ -17,6 +17,13 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   load exits 78.
 - **Exit code change: a configuration that does not load exits 78** for the commands that read it
   (see Fixed), where it used to exit 1 from every command.
+- **The deploy port takes `set_permissions: bool | None` and `permission_overrides`.**
+  `DeployConfiguration`, `deploy_configuration` and the in-memory double default
+  `set_permissions` to None (the configured `enabled` decides) and forward
+  `permission_overrides` to lib_layered_config's `deploy_config` unchanged. Refusals of
+  `--dir-mode`/`--file-mode` use the library's wording ("unsafe directory mode 0o777: group
+  write (0o020); world write (0o002)"), and a zero-padded mode such as `0000750` is accepted as
+  `0o750`.
 - **`click` is a declared dependency.** The package imports it directly (`adapters/cli/main.py`,
   `commands/config.py`) but only had it through rich-click. A new test fails when a runtime
   import is missing from `[project].dependencies`.
@@ -47,8 +54,10 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   replaces the file) exit 1 with empty stdout. The root now records the failure
   (`adapters/cli/config_load.py`); `config`, `send-email`, `send-notification` and the VNC
   commands that open a connection with the configured timings (`type`, `key`, `click`,
-  `screenshot`, `click-text`) refuse with exit 78 and one line naming it, while `config-deploy`
-  (with a warning), `config-generate-examples`, `ocr`, `info`, `hello` and help still run. An
+  `screenshot`, `click-text`) refuse with exit 78 and one line naming it, while `config-deploy`,
+  `config-generate-examples`, `ocr`, `info`, `hello` and help still run (`config-deploy` reads
+  nothing from that configuration, see the next entry, so `config-deploy --force` replaces the
+  broken file). An
   unreadable file takes the same path, and so does an `--env-file` that is not UTF-8 (the line
   names the file). `--traceback` prints the loader's chained traceback before the line. Any other
   exception from the loader is a bug and propagates as one.
@@ -58,8 +67,33 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   key under it (`--set a.b=1 --set a.b.c=2`), which escaped as a `TypeError` (exit 22) in one order
   and silently dropped the earlier value in the other. `config --profile X` reloads with the
   root's `--env-file` instead of searching for another `.env`.
+- **`[lib_layered_config.default_permissions]` now takes effect, and only the configuration
+  files decide it.** The per-layer modes were read, but only `enabled` was ever used, so
+  `--set lib_layered_config.default_permissions.user_directory='"0o750"'` still produced a `0o700`
+  directory, and a malformed mode silently fell back to the default. `config-deploy` now hands its
+  options and any `--set` of the section to lib_layered_config, which deploys each target with its
+  configured directory and file mode (`--dir-mode`/`--file-mode` still win) and reads the section
+  itself: from the bundled defaults, the configuration files the deploy does not overwrite and the
+  environment, never from `.env` (nor `--env-file`). So a `.env` in the working directory can
+  neither change a deployed mode nor block a deploy, and `config-deploy --force` replaces a
+  deployed file that does not parse or holds a bad value without further options. A malformed or
+  out-of-range mode, a bare integer (TOML `user_file = 400` is decimal 400, i.e. `0o620`), an
+  unsafe mode, a non-boolean `enabled`, a section that is not a table or an unknown key stops the
+  command with exit 78 before anything is written: one `Error:` line per problem naming the key
+  and where it was set (`(source: override)` for a `--set`), then, for a configured value, a hint
+  that both `--dir-mode` and `--file-mode` deploy anyway. `--no-permissions` together with
+  `--dir-mode` or `--file-mode` is a usage error (exit 2). The report says "(permissions not set)"
+  only for an explicit `--no-permissions`, and "Deployed configuration" is logged after the
+  deploy rather than "Deploying configuration" before it.
 
 ### Security
+- **`config-deploy` refuses unsafe and malformed modes.** `--dir-mode -1` passed the unbounded
+  octal parser as `-1`, and `--dir-mode 777`, a setuid bit or a group-writable mode was handed on
+  for a directory that can hold the SMTP password. `--dir-mode`/`--file-mode`
+  are now parsed by lib_layered_config's `DeployMode`, the rule the library applies to configured
+  modes too: a plain octal literal within `0`..`0o7777`, no setuid, setgid or sticky bit, no group
+  or world write, no execute bit on a file, and the owner keeps `rwx` on a directory and `rw` on a
+  file. A refusal is a usage error (exit 2) naming the bits, and nothing is written.
 - **An attachment allow or block list in the wrong form is refused, not dropped.** The
   `[email.attachments]` lists `allowed_extensions`, `blocked_extensions`, `allowed_directories`
   and `blocked_directories` read any value that was not a list as "not configured", so a
@@ -72,6 +106,11 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   is read like a list and a set like a frozenset (an empty one still disables the list).
   `smtp_hosts` and `recipients` no longer empty a tuple or a non-list value: a tuple is read as a
   list, a number is refused.
+
+### Removed
+- `adapters/config/permissions.py` (`PermissionDefaults`, `get_permission_defaults`,
+  `get_modes_for_target`, `parse_mode`): lib_layered_config reads and checks the permission
+  settings itself.
 
 ## [1.0.4] 2026-07-30 18:36:36
 
