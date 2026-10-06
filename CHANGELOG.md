@@ -67,6 +67,12 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   key under it (`--set a.b=1 --set a.b.c=2`), which escaped as a `TypeError` (exit 22) in one order
   and silently dropped the earlier value in the other. `config --profile X` reloads with the
   root's `--env-file` instead of searching for another `.env`.
+- **An invalid `[email]` section is reported one line per problem.** `send-email` and
+  `send-notification` exited 78 with pydantic's multi-line report and documentation URLs. They now
+  print one line per problem, `Error: Invalid configuration: email.<key>: <reason>` (an
+  `[email.attachments]` setting is named by its nested key, and the refused input is never
+  shown), and still exit 78. An invalid option value (`--timeout -5`) still exits 22, now in the
+  same one-line form (`Error: Invalid option value: ...`). Both are logged with the problem list.
 - **`[lib_layered_config.default_permissions]` now takes effect, and only the configuration
   files decide it.** The per-layer modes were read, but only `enabled` was ever used, so
   `--set lib_layered_config.default_permissions.user_directory='"0o750"'` still produced a `0o700`
@@ -101,7 +107,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   `[".pdf", ".txt"]` arrives as a list) silently replaced the configured list with btx_lib_mail's
   defaults: a configured whitelist was lifted, a configured blacklist replaced. Such a value, and
   a number, boolean or table, is now refused: `send-email` and `send-notification` exit 78 with
-  `Error: Invalid configuration - ... attachment_<key>: expected a list ...`. An empty value
+  `Error: Invalid configuration: email.attachments.<key>: expected a list ...`. An empty value
   (`[]`, an empty or whitespace-only string) still means "not configured". From Python, a tuple
   is read like a list and a set like a frozenset (an empty one still disables the list).
   `smtp_hosts` and `recipients` no longer empty a tuple or a non-list value: a tuple is read as a

@@ -211,5 +211,4 @@ def test_send_email_exits_78_naming_the_setting(
     assert result.exit_code == 78, result.output
     errors = [line for line in result.output.splitlines() if line.startswith("Error:")]
     assert len(errors) == 1, result.output
-    assert errors[0].startswith("Error: Invalid configuration"), result.output
-    assert "attachment_blocked_extensions" in result.output, result.output
+    assert errors[0].startswith("Error: Invalid configuration: email.attachments.blocked_extensions: "), result.output
