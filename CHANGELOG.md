@@ -91,6 +91,13 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   `--dir-mode` or `--file-mode` is a usage error (exit 2). The report says "(permissions not set)"
   only for an explicit `--no-permissions`, and "Deployed configuration" is logged after the
   deploy rather than "Deploying configuration" before it.
+- **The documented `.env` and environment syntax for lists and tables works.**
+  `defaultconfig.d/50-mail.toml` and `defaultconfig.d/90-logging.toml` showed comma-separated lists
+  (`EMAIL__SMTP_HOSTS=a:587,b:587`, `EMAIL__RECIPIENTS=...`) and `LEVEL=style` / `field=regex`
+  pairs, but a comma-separated value arrives as ONE string in both layers: one bogus SMTP host, or
+  a logging table that is refused. They now show a JSON array or object (unquoted in `.env`,
+  shell-quoted in the environment) or one key per entry (`EMAIL__SMTP_HOSTS__0=...`), and say how
+  an unquoted value converts.
 
 ### Security
 - **`config-deploy` refuses unsafe and malformed modes.** `--dir-mode -1` passed the unbounded

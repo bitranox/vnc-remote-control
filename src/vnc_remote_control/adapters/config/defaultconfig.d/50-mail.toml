@@ -27,7 +27,7 @@
 #   EMAIL__FROM_ADDRESS=alerts@example.com
 #
 # Precedence (lowest to highest):
-#   defaults → app config → host config → user config → .env file → env vars
+#   defaults -> app config -> host config -> user config -> .env file -> env vars
 #
 # IMPORTANT: Never commit .env files containing secrets to version control
 #
@@ -37,8 +37,10 @@
 # Purpose: SMTP servers to use for email delivery (tried in order)
 # Type: array of strings in "host[:port]" format
 # Default: [] (empty, must be configured to send email)
-# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__SMTP_HOSTS=smtp.example.com:587,smtp-backup.example.com:587
-# .env: EMAIL__SMTP_HOSTS=smtp.example.com:587,smtp-backup.example.com:587
+# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__SMTP_HOSTS='["smtp.example.com:587","smtp-backup.example.com:587"]'
+# .env: EMAIL__SMTP_HOSTS=["smtp.example.com:587","smtp-backup.example.com:587"] (unquoted)
+#   or one key per host: EMAIL__SMTP_HOSTS__0=smtp.example.com:587, EMAIL__SMTP_HOSTS__1=...
+# A comma-separated value is NOT a list: it arrives as ONE host string.
 # Note: Port 587 is standard for STARTTLS, 465 for implicit TLS, 25 for plain
 smtp_hosts = []
 
@@ -52,8 +54,9 @@ from_address = ""
 # Purpose: Default recipient addresses for outgoing emails
 # Type: array of strings (valid email addresses)
 # Default: [] (empty, must be configured or passed via --to)
-# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__RECIPIENTS=admin@example.com,ops@example.com
-# .env: EMAIL__RECIPIENTS=admin@example.com,ops@example.com
+# Environment Variable: VNC_REMOTE_CONTROL___EMAIL__RECIPIENTS='["admin@example.com","ops@example.com"]'
+# .env: EMAIL__RECIPIENTS=["admin@example.com","ops@example.com"] (unquoted)
+#   or one key per address: EMAIL__RECIPIENTS__0=admin@example.com, EMAIL__RECIPIENTS__1=...
 # Note: When set, emails will be sent to these addresses unless overridden via --to
 recipients = []
 
