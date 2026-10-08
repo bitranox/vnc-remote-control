@@ -26,6 +26,7 @@ import rich_click as click
 from ... import ocr
 from ...config.vnc import build_rfb_timings
 from ...rfb import RfbClient, RfbError
+from ..config_load import require_config
 from ..constants import CLICK_CONTEXT_SETTINGS
 from ..context import get_cli_context
 from ..typed_click import argument, option
@@ -48,11 +49,15 @@ def _client(ctx: click.Context) -> RfbClient:
     """Build an RfbClient for the configured server with the configured timings.
 
     Event timings come from the ``[vnc]`` config section, scaled by the global
-    ``--delay-scale`` option.
+    ``--delay-scale`` option. The client is not connected until it is entered.
+
+    Raises:
+        click.exceptions.Exit: The configuration could not be loaded (exit 78): the
+            timings would otherwise silently fall back to the defaults.
     """
     host, port, password = _server(ctx)
     cli_ctx = get_cli_context(ctx)
-    timings = build_rfb_timings(cli_ctx.config).scaled(cli_ctx.delay_scale)
+    timings = build_rfb_timings(require_config(ctx, cli_ctx)).scaled(cli_ctx.delay_scale)
     return RfbClient(host, port, password=password, timings=timings)
 
 
@@ -105,9 +110,12 @@ def _ocr_words(host: str, port: int, password: str | None, min_confidence: float
 @click.pass_context
 def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
     """Type a literal string into the guest."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-type", extra={"command": "type"}):
         logger.info("Typing text into guest")
-        with _client(ctx) as client:
+        with rfb as client:
             client.type_text(text)
             if enter:
                 client.press("enter")
@@ -119,9 +127,12 @@ def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
 @click.pass_context
 def cli_key(ctx: click.Context, name: str) -> None:
     """Press a single named key such as enter, tab, or esc."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-key", extra={"command": "key"}):
         logger.info("Pressing named key")
-        with _client(ctx) as client:
+        with rfb as client:
             client.press(name)
     click.echo(f"pressed {name}", err=True)
 
@@ -132,9 +143,12 @@ def cli_key(ctx: click.Context, name: str) -> None:
 @click.pass_context
 def cli_click(ctx: click.Context, x: int, y: int) -> None:
     """Left-click at pixel position X Y."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-click", extra={"command": "click"}):
         logger.info("Clicking at pixel position")
-        with _client(ctx) as client:
+        with rfb as client:
             client.click(x, y)
     click.echo(f"clicked ({x}, {y})", err=True)
 
@@ -152,9 +166,12 @@ def cli_click(ctx: click.Context, x: int, y: int) -> None:
 @click.pass_context
 def cli_screenshot(ctx: click.Context, outfile: str, mark: tuple[int, int] | None, grid: int | None) -> None:
     """Save the native-resolution framebuffer to a PNG file."""
+    # Built before the log line so a configuration that did not load refuses without logging
+    # an action that never happens.
+    rfb = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-screenshot", extra={"command": "screenshot"}):
         logger.info("Capturing framebuffer screenshot")
-        with _client(ctx) as client:
+        with rfb as client:
             width, height = client.screenshot(outfile, mark=mark, grid=grid)
     # Parseable resolution line on stdout so an LLM can read the native size and
     # trust that screenshot pixels equal click coordinates.
@@ -204,14 +221,16 @@ def cli_ocr(ctx: click.Context, grep: str | None, min_confidence: float) -> None
 def cli_click_text(ctx: click.Context, pattern: str, min_confidence: float) -> None:
     """OCR the screen and click the first word matching a pattern (requires tesseract)."""
     host, port, password = _server(ctx)
+    # Built before the OCR pass so a configuration that did not load refuses up front.
+    clicker = _client(ctx)
     with lib_log_rich.runtime.bind(job_id="cli-click-text", extra={"command": "click-text"}):
         logger.info("Clicking on-screen text by pattern")
         words = _ocr_words(host, port, password, min_confidence)
         target = ocr.first_match(words, pattern)
         if target is None:
             click.echo(f"no on-screen text matched {pattern!r}", err=True)
-            raise SystemExit(1)
-        with _client(ctx) as client:
+            ctx.exit(1)
+        with clicker as client:
             client.click(target.cx, target.cy)
     click.echo(f'clicked "{target.text}" at ({target.cx},{target.cy})')
 

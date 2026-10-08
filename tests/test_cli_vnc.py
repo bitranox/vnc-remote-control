@@ -130,12 +130,16 @@ def test_click_text_clicks_match_center(
 @pytest.mark.os_agnostic
 def test_click_text_no_match_returns_nonzero(
     monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
     managed_traceback_state: None,
 ) -> None:
-    """click-text exits nonzero when nothing matches."""
+    """click-text exits 1 when nothing matches, without printing a bare ``SystemExit: 1``."""
     monkeypatch.setattr(vnc_cmd, "RfbClient", _FakeClient)
     monkeypatch.setattr(vnc_cmd, "_ocr_words", _one_word)
-    assert cli_mod.main(["--port", "5901", "click-text", "missing"], services_factory=build_production) != 0
+    assert cli_mod.main(["--port", "5901", "click-text", "missing"], services_factory=build_production) == 1
+    err = capsys.readouterr().err
+    assert "no on-screen text matched 'missing'" in err
+    assert "SystemExit" not in err
 
 
 @pytest.mark.os_agnostic

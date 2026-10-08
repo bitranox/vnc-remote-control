@@ -36,6 +36,9 @@ subsystems are inherited from the bitranox CLI-application template.
   rich-click CLI bootstrap, root group and global options, typed `CLIContext`,
   POSIX `ExitCode` enum, and the typed-decorator facade. `lib_cli_exit_tools`
   maps exceptions to exit codes.
+- `adapters/cli/config_load.py` - loads the configuration for the root group and
+  records a load failure instead of raising it; `require_config` refuses a command
+  that reads the configuration with exit 78 and one line naming the failure.
 
 ## Inherited subsystems
 

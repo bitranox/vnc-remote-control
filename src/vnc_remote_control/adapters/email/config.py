@@ -12,7 +12,7 @@ from typing import Any, cast
 
 from btx_lib_mail import validate_email_address, validate_smtp_host
 from btx_lib_mail.lib_mail import ConfMail
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 #: The form an attachment list must take, named by the refusal of any other form.
 _LIST_FORM = 'a list: a TOML array, or in an environment variable a JSON array such as [".pdf", ".txt"]'
@@ -226,7 +226,9 @@ class EmailConfig(BaseModel):
         """Convert to btx_lib_mail ConfMail object.
 
         Isolates the adapter dependency on btx_lib_mail types from the
-        rest of the application.
+        rest of the application. The attachment size limit is always passed, None
+        included: in ``ConfMail`` None lifts the limit, while ``send()`` reads a size
+        keyword of None as "use the configured default".
 
         Returns:
             ConfMail instance configured with current settings.
@@ -236,8 +238,10 @@ class EmailConfig(BaseModel):
             >>> conf = config.to_conf_mail()
             >>> conf.smtphosts
             ['smtp.example.com']
+            >>> EmailConfig(attachment_max_size_bytes=0).to_conf_mail().attachment_max_size_bytes is None
+            True
         """
-        # Build kwargs, omitting None values to use library defaults
+        # The size limit is passed even when None: in ConfMail that lifts the limit.
         kwargs: dict[str, Any] = {
             "smtphosts": self.smtp_hosts,
             "smtp_username": self.smtp_username,
@@ -248,10 +252,11 @@ class EmailConfig(BaseModel):
             "raise_on_invalid_recipient": self.raise_on_invalid_recipient,
             "attachment_allow_symlinks": self.attachment_allow_symlinks,
             "attachment_raise_on_security_violation": self.attachment_raise_on_security_violation,
+            "attachment_max_size_bytes": self.attachment_max_size_bytes,
         }
 
-        # Only pass attachment security settings when explicitly configured
-        # (None = use btx_lib_mail's OS-specific defaults)
+        # Only pass the attachment lists when explicitly configured
+        # (None = use btx_lib_mail's defaults)
         if self.attachment_allowed_extensions is not None:
             kwargs["attachment_allowed_extensions"] = self.attachment_allowed_extensions
         if self.attachment_blocked_extensions is not None:
@@ -260,8 +265,6 @@ class EmailConfig(BaseModel):
             kwargs["attachment_allowed_directories"] = self.attachment_allowed_directories
         if self.attachment_blocked_directories is not None:
             kwargs["attachment_blocked_directories"] = self.attachment_blocked_directories
-        if self.attachment_max_size_bytes is not None:
-            kwargs["attachment_max_size_bytes"] = self.attachment_max_size_bytes
 
         return ConfMail(**kwargs)
 
@@ -327,7 +330,59 @@ def load_email_config_from_dict(config_dict: Mapping[str, Any]) -> EmailConfig:
     return EmailConfig.model_validate(email_raw if email_raw else {})
 
 
+#: The configuration section EmailConfig is read from, and the field prefix that stands for
+#: its nested ``[email.attachments]`` table (see :func:`load_email_config_from_dict`).
+_SECTION = "email"
+_ATTACHMENT_PREFIX = "attachment_"
+
+
+def _configuration_key(loc: tuple[int | str, ...]) -> str:
+    """Spell a validation error's location as the dotted key a user writes in the file.
+
+    Examples:
+        >>> _configuration_key(("timeout",))
+        'email.timeout'
+        >>> _configuration_key(("attachment_max_size_bytes",))
+        'email.attachments.max_size_bytes'
+        >>> _configuration_key(())
+        'email'
+    """
+    parts = [str(part) for part in loc]
+    if parts and parts[0].startswith(_ATTACHMENT_PREFIX):
+        parts[0:1] = ["attachments", parts[0].removeprefix(_ATTACHMENT_PREFIX)]
+    return ".".join((_SECTION, *parts))
+
+
+def describe_validation_error(error: ValidationError) -> list[str]:
+    """Render an EmailConfig validation error as one ``<key>: <reason>`` line per problem.
+
+    The refused input is never part of a line: it can be the SMTP password.
+
+    Args:
+        error: The error ``EmailConfig`` validation raised.
+
+    Returns:
+        One line per problem; the key is ``email`` alone for a problem with the whole section.
+
+    Example:
+        >>> try:
+        ...     EmailConfig(timeout=-5.0)
+        ... except ValidationError as exc:
+        ...     describe_validation_error(exc)
+        ['email: timeout must be positive, got -5.0']
+    """
+    lines: list[str] = []
+    for item in error.errors(include_url=False, include_input=False):
+        # pydantic prefixes the message of a ValueError raised by a validator with
+        # "Value error, "; the exception it carries holds the message as written.
+        raised = item.get("ctx", {}).get("error")
+        reason = str(raised) if isinstance(raised, ValueError) else item["msg"]
+        lines.append(f"{_configuration_key(item['loc'])}: {reason}".replace("\n", " "))
+    return lines
+
+
 __all__ = [
     "EmailConfig",
+    "describe_validation_error",
     "load_email_config_from_dict",
 ]

@@ -10,7 +10,7 @@ from vnc_remote_control.adapters import cli as cli_mod
 from vnc_remote_control.adapters.config import loader as config_mod
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Callable, Mapping
     from pathlib import Path
 
     from click.testing import CliRunner, Result
@@ -209,9 +209,10 @@ def test_when_config_deploy_is_invoked_it_deploys_configuration(
         targets: Any,
         force: bool = False,
         profile: str | None = None,
-        set_permissions: bool = True,
+        set_permissions: bool | None = None,
         dir_mode: int | None = None,
         file_mode: int | None = None,
+        permission_overrides: Mapping[str, object] | None = None,
     ) -> list[Path]:
         return [deployed_path]
 
@@ -236,9 +237,10 @@ def test_when_config_deploy_finds_no_files_to_create_it_informs_user(
         targets: Any,
         force: bool = False,
         profile: str | None = None,
-        set_permissions: bool = True,
+        set_permissions: bool | None = None,
         dir_mode: int | None = None,
         file_mode: int | None = None,
+        permission_overrides: Mapping[str, object] | None = None,
     ) -> list[Path]:
         return []
 
@@ -249,6 +251,25 @@ def test_when_config_deploy_finds_no_files_to_create_it_informs_user(
     assert result.exit_code == 0
     assert "No files were created" in result.output
     assert "--force" in result.output
+
+
+@pytest.mark.os_agnostic
+def test_config_deploy_force_with_nothing_to_write_does_not_suggest_force(
+    cli_runner: CliRunner,
+    inject_deploy_configuration: Callable[[Callable[..., list[Path]]], Callable[[], Any]],
+) -> None:
+    """With ``--force`` an empty result means every target already holds the bundled content."""
+
+    def deploy_nothing(**_kwargs: Any) -> list[Path]:
+        return []
+
+    factory = inject_deploy_configuration(deploy_nothing)
+
+    result: Result = cli_runner.invoke(cli_mod.cli, ["config-deploy", "--target", "user", "--force"], obj=factory)
+
+    assert result.exit_code == 0, result.output
+    assert "Use --force" not in result.output
+    assert "already identical to the bundled one" in result.output
 
 
 @pytest.mark.os_agnostic
@@ -263,9 +284,10 @@ def test_when_config_deploy_encounters_permission_error_it_handles_gracefully(
         targets: Any,
         force: bool = False,
         profile: str | None = None,
-        set_permissions: bool = True,
+        set_permissions: bool | None = None,
         dir_mode: int | None = None,
         file_mode: int | None = None,
+        permission_overrides: Mapping[str, object] | None = None,
     ) -> list[Any]:
         raise PermissionError("Permission denied")
 
@@ -292,20 +314,22 @@ def test_when_config_deploy_supports_multiple_targets(
     path1.touch()
     path2.touch()
 
+    deployed = {"user": path1, "host": path2}
+    seen: list[str] = []
+
     def mock_deploy(
         *,
         targets: Any,
         force: bool = False,
         profile: str | None = None,
-        set_permissions: bool = True,
+        set_permissions: bool | None = None,
         dir_mode: int | None = None,
         file_mode: int | None = None,
+        permission_overrides: Mapping[str, object] | None = None,
     ) -> list[Path]:
         target_values = [t.value if isinstance(t, DeployTarget) else t for t in targets]
-        assert len(target_values) == 2
-        assert "user" in target_values
-        assert "host" in target_values
-        return [path1, path2]
+        seen.extend(target_values)
+        return [deployed[value] for value in target_values]
 
     factory = inject_deploy_configuration(mock_deploy)
 
@@ -314,6 +338,7 @@ def test_when_config_deploy_supports_multiple_targets(
     )
 
     assert result.exit_code == 0
+    assert seen == ["user", "host"]
     assert str(path1) in result.output
     assert str(path2) in result.output
 

@@ -178,3 +178,24 @@ def test_env_file_values_appear_in_config(
 
     assert result.exit_code == 0
     assert "from-env-file" in result.stdout
+
+
+@pytest.mark.os_agnostic
+def test_an_unquoted_env_file_false_reads_as_a_boolean(
+    cli_runner: CliRunner,
+    tmp_path: Path,
+    clear_config_cache: None,
+    production_factory: Callable[[], AppServices],
+) -> None:
+    """An unquoted ``false`` in a ``.env`` converts like the environment layer, to the boolean."""
+    env_file = tmp_path / ".env"
+    env_file.write_text("EMAIL__USE_STARTTLS=false\n")
+
+    result: Result = cli_runner.invoke(
+        cli_mod.cli,
+        ["--env-file", str(env_file), "config", "--format", "json", "--section", "email"],
+        obj=production_factory,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert '"use_starttls": false' in result.stdout
