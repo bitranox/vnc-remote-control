@@ -69,7 +69,9 @@ class EmailConfig(BaseModel):
         ['smtp.example.com:587']
     """
 
-    model_config = ConfigDict(frozen=True)
+    # lib_layered_config reads an unquoted all-digit .env value (EMAIL__SMTP_PASSWORD=123456) as an int;
+    # the conversion is lossless, so turning it back into text restores what the operator wrote.
+    model_config = ConfigDict(frozen=True, coerce_numbers_to_str=True)
 
     smtp_hosts: list[str] = Field(default_factory=list)
     from_address: str | None = None

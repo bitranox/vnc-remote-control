@@ -6,6 +6,14 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Fixed
+- **A digit-only `.env` value no longer stops a command with `Input should be a valid string`.**
+  lib_layered_config 7.1 reads an unquoted `.env` or environment value that spells a number
+  losslessly as an int, so `EMAIL__SMTP_PASSWORD=123456` or `LIB_LOG_RICH__SERVICE=4711` reached a
+  text setting as a number and was refused. The `[email]` and `[lib_log_rich]` sections now turn
+  such a number back into the text that was written; numeric settings still read as numbers and
+  invalid values are still refused.
+
 ## [1.1.0] 2026-10-08 11:00:41
 
 ### Changed
