@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -11,7 +12,6 @@ from vnc_remote_control.adapters.config import loader as config_mod
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
-    from pathlib import Path
 
     from click.testing import CliRunner, Result
     from lib_layered_config import Config
@@ -223,6 +223,10 @@ def test_when_config_deploy_is_invoked_it_deploys_configuration(
     assert result.exit_code == 0
     assert "Configuration deployed successfully" in result.output
     assert str(deployed_path) in result.output
+    # The output must survive a legacy Windows console codepage (cp1252): a non-ASCII
+    # marker here crashes config-deploy with a UnicodeEncodeError on Windows even though
+    # the files were already written. Keep the deploy report ASCII-only.
+    result.output.encode("cp1252")
 
 
 @pytest.mark.os_agnostic
@@ -254,22 +258,24 @@ def test_when_config_deploy_finds_no_files_to_create_it_informs_user(
 
 
 @pytest.mark.os_agnostic
-def test_config_deploy_force_with_nothing_to_write_does_not_suggest_force(
+def test_when_a_forced_config_deploy_finds_every_file_identical_it_says_nothing_was_written(
     cli_runner: CliRunner,
-    inject_deploy_configuration: Callable[[Callable[..., list[Path]]], Callable[[], Any]],
+    production_factory: Callable[[], Any],
+    user_layer_in_tmp_path: Path,
 ) -> None:
-    """With ``--force`` an empty result means every target already holds the bundled content."""
+    """A second forced deploy writes nothing, and does not suggest the --force it was given."""
+    command = ["config-deploy", "--target", "user", "--force"]
+    first: Result = cli_runner.invoke(cli_mod.cli, command, obj=production_factory)
+    written = [Path(line.removeprefix("  + ")) for line in first.output.splitlines() if line.startswith("  + ")]
+    assert first.exit_code == 0
+    assert written  # liveness: the first deploy writes the files the second one finds identical
+    assert all(path.resolve().is_relative_to(user_layer_in_tmp_path.resolve()) for path in written)
 
-    def deploy_nothing(**_kwargs: Any) -> list[Path]:
-        return []
+    second: Result = cli_runner.invoke(cli_mod.cli, command, obj=production_factory)
 
-    factory = inject_deploy_configuration(deploy_nothing)
-
-    result: Result = cli_runner.invoke(cli_mod.cli, ["config-deploy", "--target", "user", "--force"], obj=factory)
-
-    assert result.exit_code == 0, result.output
-    assert "Use --force" not in result.output
-    assert "already identical to the bundled one" in result.output
+    assert second.exit_code == 0
+    assert "No files were written: every target file is already identical" in second.output
+    assert "--force" not in second.output
 
 
 @pytest.mark.os_agnostic

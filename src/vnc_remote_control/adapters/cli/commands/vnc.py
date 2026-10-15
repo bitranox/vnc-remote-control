@@ -26,6 +26,7 @@ import rich_click as click
 from ... import ocr
 from ...config.vnc import build_rfb_timings
 from ...rfb import RfbClient, RfbError
+from .. import safe_console
 from ..config_load import require_config
 from ..constants import CLICK_CONTEXT_SETTINGS
 from ..context import get_cli_context
@@ -119,7 +120,7 @@ def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
             client.type_text(text)
             if enter:
                 client.press("enter")
-    click.echo("typed", err=True)
+    safe_console.echo("typed", err=True)
 
 
 @click.command("key", context_settings=CLICK_CONTEXT_SETTINGS)
@@ -134,7 +135,7 @@ def cli_key(ctx: click.Context, name: str) -> None:
         logger.info("Pressing named key")
         with rfb as client:
             client.press(name)
-    click.echo(f"pressed {name}", err=True)
+    safe_console.echo(f"pressed {name}", err=True)
 
 
 @click.command("click", context_settings=CLICK_CONTEXT_SETTINGS)
@@ -150,7 +151,7 @@ def cli_click(ctx: click.Context, x: int, y: int) -> None:
         logger.info("Clicking at pixel position")
         with rfb as client:
             client.click(x, y)
-    click.echo(f"clicked ({x}, {y})", err=True)
+    safe_console.echo(f"clicked ({x}, {y})", err=True)
 
 
 @click.command("screenshot", context_settings=CLICK_CONTEXT_SETTINGS)
@@ -175,8 +176,8 @@ def cli_screenshot(ctx: click.Context, outfile: str, mark: tuple[int, int] | Non
             width, height = client.screenshot(outfile, mark=mark, grid=grid)
     # Parseable resolution line on stdout so an LLM can read the native size and
     # trust that screenshot pixels equal click coordinates.
-    click.echo(f"resolution: {width}x{height}")
-    click.echo(f"wrote {outfile} ({width}x{height})", err=True)
+    safe_console.echo(f"resolution: {width}x{height}")
+    safe_console.echo(f"wrote {outfile} ({width}x{height})", err=True)
 
 
 @click.command("ocr", context_settings=CLICK_CONTEXT_SETTINGS)
@@ -204,7 +205,7 @@ def cli_ocr(ctx: click.Context, grep: str | None, min_confidence: float) -> None
     if grep is not None:
         words = ocr.filter_words(words, grep)
     for word in words:
-        click.echo(word.format_line())
+        safe_console.echo(word.format_line())
 
 
 @click.command("click-text", context_settings=CLICK_CONTEXT_SETTINGS)
@@ -228,11 +229,11 @@ def cli_click_text(ctx: click.Context, pattern: str, min_confidence: float) -> N
         words = _ocr_words(host, port, password, min_confidence)
         target = ocr.first_match(words, pattern)
         if target is None:
-            click.echo(f"no on-screen text matched {pattern!r}", err=True)
+            safe_console.echo(f"no on-screen text matched {pattern!r}", err=True)
             ctx.exit(1)
         with clicker as client:
             client.click(target.cx, target.cy)
-    click.echo(f'clicked "{target.text}" at ({target.cx},{target.cy})')
+    safe_console.echo(f'clicked "{target.text}" at ({target.cx},{target.cy})')
 
 
 __all__ = [

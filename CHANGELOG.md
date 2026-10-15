@@ -6,6 +6,31 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Changed
+- **Synced with bitranox_template_py_cli 2.4.1** (a three-way merge from the template version
+  this app last matched before the 2.0 fixes were ported by hand). The hand-ported fixes are
+  replaced by the template's own versions; what only this app has stays: the `type`, `key`,
+  `click`, `screenshot`, `ocr` and `click-text` commands, the RFB and OCR code behind them, the
+  `[vnc]` section, the `--host`, `--port`, `--password` and `--delay-scale` options, and
+  digit-only `.env` values in text settings.
+- `EmailConfig` is a subclass of btx_lib_mail's `ConfMail` (`btx_lib_mail>=4.3.0`). The Python
+  field names follow ConfMail (`smtphosts`, `smtp_use_starttls`, `smtp_timeout`); the keys in the
+  configuration files stay the same.
+- An unknown key in `[email]` or `[email.attachments]` makes `send-email` and `send-notification`
+  exit 78 with `Error: Invalid configuration: email.<key>: unknown key`, one line per problem
+  naming the file key. It used to be ignored.
+- New `[email]` keys: `starttls_verify`, `local_hostname`, `delivery_deadline`,
+  `recipient_max_count`, and `attachments.max_count`.
+- A delivery error keeps the library's message; it is no longer replaced by a generic one when it
+  contains a word such as "password".
+- `config --profile` checks the logging configuration with `lib_log_rich.validate_config` and
+  refuses what `config` without a profile refuses.
+- A `--set` value appears in the `config` output with the source `cli` (was `override`).
+- Console output, the VNC commands included, goes through one adapter that replaces a character
+  the console codepage cannot show instead of crashing on it (a cp1252 Windows console).
+- Raised the dependency floors: `lib_layered_config>=7.1.9`, `lib_log_rich>=6.5.2`,
+  `btx_lib_mail>=4.3.0`.
+
 ## [1.1.1] 2026-10-12 19:24:49
 
 ### Fixed

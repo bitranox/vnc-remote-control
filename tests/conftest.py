@@ -213,6 +213,18 @@ def production_factory() -> Callable[[], AppServices]:
 
 
 @pytest.fixture
+def user_layer_in_tmp_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Path:
+    """Point every OS's user-layer location at ``tmp_path`` and return it.
+
+    A deploy then writes under ``tmp_path`` rather than into the real user configuration
+    directory, and the developer's own user-layer files cannot decide a result.
+    """
+    for name in ("HOME", "USERPROFILE", "XDG_CONFIG_HOME", "APPDATA", "LOCALAPPDATA"):
+        monkeypatch.setenv(name, str(tmp_path))
+    return tmp_path
+
+
+@pytest.fixture
 def strip_ansi() -> Callable[[str], str]:
     """Return a helper that strips ANSI escape sequences from a string.
 
@@ -384,7 +396,7 @@ def inject_config(
             result = cli_runner.invoke(cli, ["config"], obj=factory)
             assert "key" in result.output
     """
-    from vnc_remote_control.adapters.memory import init_logging_in_memory
+    from vnc_remote_control.adapters.memory import check_logging_config_in_memory, init_logging_in_memory
     from vnc_remote_control.composition import AppServices, build_production
 
     def _inject(config: Config) -> Callable[[], AppServices]:
@@ -403,6 +415,7 @@ def inject_config(
             # The quiet runtime: production init_logging queues INFO lines that race into
             # CliRunner's stderr, so a stderr assertion would depend on timing.
             init_logging=init_logging_in_memory,
+            check_logging_config=check_logging_config_in_memory,
         )
         return lambda: test_services
 
@@ -438,7 +451,7 @@ def inject_config_with_profile_capture(
             cli_runner.invoke(cli, ["--profile", "staging", "config"], obj=factory)
             assert captured == ["staging"]
     """
-    from vnc_remote_control.adapters.memory import init_logging_in_memory
+    from vnc_remote_control.adapters.memory import check_logging_config_in_memory, init_logging_in_memory
     from vnc_remote_control.composition import AppServices, build_production
 
     def _inject(config: Config, captured_profiles: list[str | None]) -> Callable[[], AppServices]:
@@ -458,6 +471,7 @@ def inject_config_with_profile_capture(
             # The quiet runtime: production init_logging queues INFO lines that race into
             # CliRunner's stderr, so a stderr assertion would depend on timing.
             init_logging=init_logging_in_memory,
+            check_logging_config=check_logging_config_in_memory,
         )
         return lambda: test_services
 
@@ -493,7 +507,7 @@ def inject_deploy_with_profile_capture(
             cli_runner.invoke(cli, ["--profile", "prod", "config-deploy", ...], obj=factory)
             assert captured == ["prod"]
     """
-    from vnc_remote_control.adapters.memory import init_logging_in_memory
+    from vnc_remote_control.adapters.memory import check_logging_config_in_memory, init_logging_in_memory
     from vnc_remote_control.composition import AppServices, build_production
 
     def _inject(deployed_path: Path, captured_profiles: list[str | None]) -> Callable[[], AppServices]:
@@ -522,6 +536,7 @@ def inject_deploy_with_profile_capture(
             # The quiet runtime: production init_logging queues INFO lines that race into
             # CliRunner's stderr, so a stderr assertion would depend on timing.
             init_logging=init_logging_in_memory,
+            check_logging_config=check_logging_config_in_memory,
         )
         return lambda: test_services
 
@@ -553,7 +568,7 @@ def inject_deploy_configuration() -> Callable[[Callable[..., list[Path]]], Calla
             cli_runner.invoke(cli, ["config-deploy", "--target", "user"], obj=factory)
             assert len(calls) == 1
     """
-    from vnc_remote_control.adapters.memory import init_logging_in_memory
+    from vnc_remote_control.adapters.memory import check_logging_config_in_memory, init_logging_in_memory
     from vnc_remote_control.composition import AppServices, build_production
 
     def _inject(deploy_fn: Callable[..., list[Path]]) -> Callable[[], AppServices]:
@@ -569,6 +584,7 @@ def inject_deploy_configuration() -> Callable[[Callable[..., list[Path]]], Calla
             # The quiet runtime: production init_logging queues INFO lines that race into
             # CliRunner's stderr, so a stderr assertion would depend on timing.
             init_logging=init_logging_in_memory,
+            check_logging_config=check_logging_config_in_memory,
         )
         return lambda: test_services
 
@@ -653,7 +669,8 @@ def email_cli_context(
             assert result.exit_code == 0
             assert ctx.spy.sent_notifications[0].subject == "Hi"
     """
-    from vnc_remote_control.adapters.memory import init_logging_in_memory, load_email_config_from_dict_in_memory
+    from vnc_remote_control.adapters.email.config import load_email_config_from_dict
+    from vnc_remote_control.adapters.memory import check_logging_config_in_memory, init_logging_in_memory
     from vnc_remote_control.adapters.memory.email import EmailSpy as EmailSpyImpl
     from vnc_remote_control.composition import AppServices, build_production
 
@@ -672,10 +689,11 @@ def email_cli_context(
             display_config=prod.display_config,
             send_email=spy.send_email,
             send_notification=spy.send_notification,
-            load_email_config_from_dict=load_email_config_from_dict_in_memory,
+            load_email_config_from_dict=load_email_config_from_dict,
             # The quiet runtime: production init_logging queues INFO lines that race into
             # CliRunner's stderr, so a stderr assertion would depend on timing.
             init_logging=init_logging_in_memory,
+            check_logging_config=check_logging_config_in_memory,
         )
         return EmailCliContext(factory=lambda: test_services, spy=spy)
 
@@ -707,7 +725,7 @@ def config_cli_context(
             result = cli_runner.invoke(cli, ["config"], obj=factory)
             assert "key" in result.output
     """
-    from vnc_remote_control.adapters.memory import init_logging_in_memory
+    from vnc_remote_control.adapters.memory import check_logging_config_in_memory, init_logging_in_memory
     from vnc_remote_control.composition import AppServices, build_production
 
     def _create(config_data: dict[str, Any]) -> Callable[[], AppServices]:
@@ -728,6 +746,7 @@ def config_cli_context(
             # The quiet runtime: production init_logging queues INFO lines that race into
             # CliRunner's stderr, so a stderr assertion would depend on timing.
             init_logging=init_logging_in_memory,
+            check_logging_config=check_logging_config_in_memory,
         )
         return lambda: test_services
 

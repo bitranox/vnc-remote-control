@@ -15,6 +15,7 @@ import rich_click as click
 
 from vnc_remote_control import __init__conf__
 
+from . import safe_console
 from .config_load import load_config, start_logging
 from .constants import CLICK_CONTEXT_SETTINGS
 from .context import apply_traceback_preferences, store_cli_context
@@ -146,7 +147,7 @@ def cli(
     apply_traceback_preferences(traceback)
 
     if ctx.invoked_subcommand is None:
-        click.echo(ctx.get_help())
+        safe_console.echo(ctx.get_help())
 
 
 # Deferred import required to break a circular dependency: this module defines

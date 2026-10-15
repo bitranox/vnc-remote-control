@@ -1,13 +1,15 @@
 """The limits btx_lib_mail applies to every send, reached through this app's send_email.
 
-The app passes no recipient or attachment count and no extension list of its own unless
-``[email.attachments]`` names one, so the library's defaults decide. These tests pin what
-those defaults do end to end: a btx_lib_mail release that changes them fails here instead of
-changing what a user's send-email accepts without a word.
+An ``EmailConfig`` built without ``recipient_max_count``, ``attachment_max_count`` or an
+extension list takes the library's defaults, and the shipped ``50-mail.toml`` carries the same
+counts (``tests/test_mail.py`` pins that). These tests pin what those defaults do end to end:
+a btx_lib_mail release that changes them fails here instead of changing what a user's
+send-email accepts without a word.
 """
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import IO, TYPE_CHECKING
 
 import pytest
@@ -16,8 +18,6 @@ from btx_lib_mail.lib_mail import AttachmentSecurityError
 from vnc_remote_control.adapters.email.sender import EmailConfig, load_email_config_from_dict, send_email
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from btx_lib_mail.lib_mail import DeliveryOptions
 
 #: The library's default caps on one send.
@@ -47,12 +47,13 @@ class _CountingTransport:
 
 
 def _config() -> EmailConfig:
-    # The blocked directories are emptied so the temporary directory a test writes its
-    # attachments to is never what refuses them; the extension defaults stay the library's.
+    # The blocked directories are replaced by one that does not exist, so the temporary
+    # directory a test writes its attachments to is never what refuses them (an empty set is
+    # refused by the library); the extension defaults stay the library's.
     return EmailConfig(
-        smtp_hosts=["smtp.test.com:587"],
+        smtphosts=["smtp.test.com:587"],
         from_address="sender@test.com",
-        attachment_blocked_directories=frozenset(),
+        attachment_blocked_directories=frozenset({Path("/nonexistent-blocked-dir")}),
     )
 
 

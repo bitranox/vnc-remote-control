@@ -1,25 +1,26 @@
-"""Digit-only .env values reach every text setting as the text the operator wrote.
+"""Digit-only ``.env`` values reach every text setting as the text the operator wrote.
 
-lib_layered_config's dotenv and environment layers turn an unquoted value into an int whenever that
-number reads back as the same text (``123456`` stays ``123456``). A text setting must therefore
-accept such a number and keep its digits; otherwise a perfectly ordinary ``.env`` line such as
-``EMAIL__SMTP_PASSWORD=123456`` stops the command with ``Input should be a valid string``.
+lib_layered_config's dotenv and environment layers turn an unquoted value into an int whenever
+that number reads back as the same text (``4711`` -> ``4711``). A text setting must therefore
+accept such a number and keep its digits; otherwise a perfectly ordinary ``.env`` line stops the
+program at startup.
 
 These tests load a real ``.env`` through the real loader, so a change in the library's coercion
-shows up here rather than on a user's machine.
+shows up here rather than on a deployed host.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
 
-from vnc_remote_control.adapters.config.loader import get_config
 from vnc_remote_control.adapters.config.vnc import build_rfb_timings
-from vnc_remote_control.adapters.email.config import EmailConfig, load_email_config_from_dict
-from vnc_remote_control.adapters.logging.setup import LoggingConfigModel
+from vnc_remote_control.adapters.logging.setup import (
+    _build_runtime_config,  # pyright: ignore[reportPrivateUsage]
+)
+from vnc_remote_control.composition import build_production
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -27,63 +28,67 @@ if TYPE_CHECKING:
     from lib_layered_config import Config
 
 
-def _load_dotenv(tmp_path: Path, *lines: str) -> Config:
+def _load_dotenv(tmp_path: Path, line: str) -> Config:
     dotenv = tmp_path / ".env"
-    dotenv.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    return get_config(dotenv_path=str(dotenv))
-
-
-def _section(config: Config, name: str) -> dict[str, Any]:
-    return cast("dict[str, Any]", config.get(name, default={}))
+    dotenv.write_text(f"{line}\n", encoding="utf-8")
+    return build_production().get_config(dotenv_path=str(dotenv))
 
 
 @pytest.mark.os_agnostic
-@pytest.mark.parametrize(
-    ("env_key", "attr", "raw"),
-    [
-        ("EMAIL__SMTP_PASSWORD", "smtp_password", "123456"),
-        ("EMAIL__SMTP_USERNAME", "smtp_username", "1001"),
-    ],
-    ids=["smtp_password", "smtp_username"],
-)
-def test_digit_only_dotenv_value_reaches_an_email_text_setting_as_its_text(
-    tmp_path: Path, clear_config_cache: None, env_key: str, attr: str, raw: str
+@pytest.mark.parametrize("key", ["SERVICE", "ENVIRONMENT"])
+def test_a_digit_only_logging_name_reaches_lib_log_rich_as_its_text(
+    user_layer_in_tmp_path: Path, clear_config_cache: None, key: str
 ) -> None:
-    config = _load_dotenv(tmp_path, f"{env_key}={raw}")
+    config = _load_dotenv(user_layer_in_tmp_path, f"LIB_LOG_RICH__{key}=4711")
     # Premise: the library hands the value over as a number. Without it the test proves nothing.
-    assert isinstance(_section(config, "email")[attr], int)
+    assert isinstance(config.get("lib_log_rich", {})[key.lower()], int)
 
-    email = load_email_config_from_dict(config.as_dict())
+    runtime = _build_runtime_config(config)
 
-    assert getattr(email, attr) == raw
+    assert getattr(runtime, key.lower()) == "4711"
 
 
 @pytest.mark.os_agnostic
-@pytest.mark.parametrize(
-    ("env_key", "attr"),
-    [("LIB_LOG_RICH__SERVICE", "service"), ("LIB_LOG_RICH__ENVIRONMENT", "environment")],
-    ids=["service", "environment"],
-)
-def test_digit_only_dotenv_value_reaches_a_logging_text_setting_as_its_text(
-    tmp_path: Path, clear_config_cache: None, env_key: str, attr: str
+@pytest.mark.parametrize("key", ["SMTP_PASSWORD", "SMTP_USERNAME"])
+def test_a_digit_only_smtp_credential_reaches_the_email_config_as_its_text(
+    user_layer_in_tmp_path: Path, clear_config_cache: None, key: str
 ) -> None:
-    loaded = _section(_load_dotenv(tmp_path, f"{env_key}=4711"), "lib_log_rich")
-    assert isinstance(loaded[attr], int)
+    config = _load_dotenv(user_layer_in_tmp_path, f"EMAIL__{key}=123456")
+    assert isinstance(config.get("email", {})[key.lower()], int)
 
-    assert getattr(LoggingConfigModel.model_validate(loaded), attr) == "4711"
+    email = build_production().load_email_config_from_dict(config.as_dict())
+
+    expected = SecretStr("123456") if key == "SMTP_PASSWORD" else "123456"
+    assert getattr(email, key.lower()) == expected
 
 
 @pytest.mark.os_agnostic
-def test_a_numeric_setting_still_reads_as_a_number(tmp_path: Path, clear_config_cache: None) -> None:
-    config = _load_dotenv(tmp_path, "EMAIL__TIMEOUT=45", "VNC__CLICK_HOLD=2")
+def test_a_numeric_setting_still_reads_as_a_number(user_layer_in_tmp_path: Path, clear_config_cache: None) -> None:
+    config = _load_dotenv(user_layer_in_tmp_path, "EMAIL__TIMEOUT=45")
 
-    assert load_email_config_from_dict(config.as_dict()).timeout == 45.0
+    email = build_production().load_email_config_from_dict(config.as_dict())
+
+    assert email.smtp_timeout == 45.0
+
+
+@pytest.mark.os_agnostic
+def test_a_numeric_vnc_setting_still_reads_as_a_number(user_layer_in_tmp_path: Path, clear_config_cache: None) -> None:
+    config = _load_dotenv(user_layer_in_tmp_path, "VNC__CLICK_HOLD=2")
+
     assert build_rfb_timings(config).click_hold == 2.0
 
 
 @pytest.mark.os_agnostic
-def test_an_invalid_email_setting_is_still_refused(tmp_path: Path, clear_config_cache: None) -> None:
-    config = _load_dotenv(tmp_path, "EMAIL__TIMEOUT=-5")
+def test_an_invalid_logging_value_is_still_refused(user_layer_in_tmp_path: Path, clear_config_cache: None) -> None:
+    config = _load_dotenv(user_layer_in_tmp_path, "LIB_LOG_RICH__SERVICE=[1, 2]")
+
+    with pytest.raises(ValidationError):
+        _build_runtime_config(config)
+
+
+@pytest.mark.os_agnostic
+def test_an_invalid_email_setting_is_still_refused(user_layer_in_tmp_path: Path, clear_config_cache: None) -> None:
+    config = _load_dotenv(user_layer_in_tmp_path, "EMAIL__TIMEOUT=-5")
 
     with pytest.raises(ValidationError, match="timeout must be positive"):
-        EmailConfig.model_validate(_section(config, "email"))
+        build_production().load_email_config_from_dict(config.as_dict())
