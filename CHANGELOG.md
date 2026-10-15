@@ -6,6 +6,8 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.1.2] 2026-10-15 11:34:37
+
 ### Changed
 - **Synced with bitranox_template_py_cli 2.4.1** (a three-way merge from the template version
   this app last matched before the 2.0 fixes were ported by hand). The hand-ported fixes are
