@@ -6,6 +6,11 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.1.4] 2026-10-24 17:18:43
+
+### Changed
+- Raise the btx_lib_mail floor to 4.6.0.
+
 ## [1.1.3] 2026-10-15 16:40:02
 
 ### Added
