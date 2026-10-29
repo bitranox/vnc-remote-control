@@ -6,6 +6,8 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.2.0] 2026-10-29 19:23:02
+
 ### Added
 
 - `type --us-shift` (library: `RfbClient.type_text(text, us_shift=True)`) holds Shift_L around every
