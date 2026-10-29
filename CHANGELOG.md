@@ -6,7 +6,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
-## [1.2.0] 2026-10-29 19:23:02
+## [1.2.0] - 2026-10-29
 
 ### Added
 
@@ -51,12 +51,12 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   a host substring, which also matched `xsmtp.test.com:5870`. The substring form was what CodeQL
   flagged as `py/incomplete-url-substring-sanitization`.
 
-## [1.1.4] 2026-10-24 17:18:43
+## [1.1.4] - 2026-10-24
 
 ### Changed
 - Raise the btx_lib_mail floor to 4.6.0.
 
-## [1.1.3] 2026-10-15 16:40:02
+## [1.1.3] - 2026-10-15
 
 ### Added
 - Python 3.15 is a supported version: declared in the classifiers, so CI and `make test-all` run it.
@@ -68,7 +68,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 - The install section explains why installing with uv protects against supply-chain attacks and why
   a plain `pip install` from PyPI does not.
 
-## [1.1.2] 2026-10-15 11:34:37
+## [1.1.2] - 2026-10-15
 
 ### Changed
 - **Synced with bitranox_template_py_cli 2.4.1** (a three-way merge from the template version
@@ -95,7 +95,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 - Raised the dependency floors: `lib_layered_config>=7.1.9`, `lib_log_rich>=6.5.2`,
   `btx_lib_mail>=4.3.0`.
 
-## [1.1.1] 2026-10-12 19:24:49
+## [1.1.1] - 2026-10-12
 
 ### Fixed
 - **A digit-only `.env` value no longer stops a command with `Input should be a valid string`.**
@@ -105,7 +105,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   such a number back into the text that was written; numeric settings still read as numbers and
   invalid values are still refused.
 
-## [1.1.0] 2026-10-08 11:00:41
+## [1.1.0] - 2026-10-08
 
 ### Changed
 - **A refused attachment exits 77, not 1 with a traceback (exit code change).** An attachment
@@ -299,7 +299,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   `get_modes_for_target`, `parse_mode`): lib_layered_config reads and checks the permission
   settings itself.
 
-## [1.0.4] 2026-07-30 18:36:36
+## [1.0.4] - 2026-07-30
 
 ### Changed
 
@@ -319,7 +319,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   is raised past it once here. No functional change; the crossing of 1.0 is a consequence of
   that alignment, not a stability claim made on its own.
 
-## [0.2.3] 2026-07-24 13:52:16
+## [0.2.3] - 2026-07-24
 
 ### Fixed
 - Latest ruff now enforces `PLR0917` (too many positional arguments): CLI command
@@ -346,14 +346,14 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   reason. Test-only deferred imports are now covered by a `tests/*.py`
   per-file-ignore instead of being fixed one by one.
 
-## [0.2.2] 2026-06-22
+## [0.2.2] - 2026-06-22
 
 ### Documentation
 - Driving-with-an-LLM skill: documents authentication (VNC has no username, only a
   password, passed via `--password` or the `VNC_REMOTE_CONTROL_PASSWORD` environment
   variable) and adds connection (`--host`/`--port`) and `--delay-scale` examples.
 
-## [0.2.1] 2026-06-22
+## [0.2.1] - 2026-06-22
 
 ### Changed
 - Release/CI workflows synced from the `default_cicd_public` template: PyPI publish
@@ -368,7 +368,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   generalizes the server-side keyboard-layout wording (openvmm as an example, not a
   requirement).
 
-## [0.2.0] 2026-06-22
+## [0.2.0] - 2026-06-22
 
 ### Added
 - Tunable key/click timing for sluggish or legacy guests. A global `--delay-scale`
@@ -383,7 +383,7 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 ### Fixed
 - Corrected stale template leftovers and non-ASCII characters in CONFIG.md.
 
-## [0.1.0] 2026-06-22
+## [0.1.0] - 2026-06-22
 
 ### Added
 - Initial release. A VNC/RFB remote-control CLI with the subcommands `type`,
