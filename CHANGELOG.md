@@ -6,6 +6,18 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Added
+
+- `type --us-shift` (library: `RfbClient.type_text(text, us_shift=True)`) holds Shift_L around every
+  character a US keyboard types with Shift. QEMU's own VNC server, the console of a plain Proxmox
+  VM, presses no Shift for a keysym, so without it `@` lands as `2` and `|` as `\`. Opt-in, because
+  a layout-aware server such as openvmm needs no help.
+
+### Changed
+
+- The bundled skill describes the Proxmox QEMU console as it is: a unix socket to tunnel to, VNC
+  password auth set with `set_password` plus `expire_password vnc never`, and `--us-shift`.
+
 ### Fixed
 
 - `logdemo` refuses a `LOG_*` variable lib_log_rich refuses (`LOG_CONSOLE_LEVEL=bogus`) with exit 78
@@ -26,8 +38,6 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   `tests` (which keeps the root `conftest.py` out of doctest collection), adds `tests` to `pythonpath`
   and pyright's `extraPaths`, and gives pyright an execution environment rooted at `tests/`. A test
   checks that every doctest collected from `src/` gets both redirects.
-
-### Fixed
 - The test suite no longer reads the app and host configuration layers of the machine it runs on.
   An autouse fixture points lib_layered_config's three app-root variables (`LIB_LAYERED_CONFIG_ETC`,
   `_MAC_APP_ROOT`, `_PROGRAMDATA`) at an empty directory under `tmp_path`, so a system-wide deploy

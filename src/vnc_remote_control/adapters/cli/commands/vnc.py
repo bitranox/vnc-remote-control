@@ -8,7 +8,9 @@ a system dependency.
 
 Keyboard model: the server owns the layout. A layout-aware server (such as
 openvmm) maps each literal keysym to the guest's configured keyboard layout, so
-``type`` sends literal keysyms and never compensates client-side.
+``type`` sends literal keysyms. QEMU's own VNC server presses no Shift for a
+keysym, so ``type --us-shift`` holds Shift_L around the characters a US keyboard
+types with Shift; it is opt-in because a layout-aware server needs no help.
 
 Coordinate model: RFB PointerEvent coordinates are absolute framebuffer pixels,
 the same pixels a native-resolution screenshot contains, so a coordinate read off
@@ -108,8 +110,15 @@ def _ocr_words(host: str, port: int, password: str | None, min_confidence: float
 @click.command("type", context_settings=CLICK_CONTEXT_SETTINGS)
 @argument("text")
 @option("--enter", is_flag=True, default=False, help="press Return after typing")
+@option(
+    "--us-shift",
+    is_flag=True,
+    default=False,
+    help="hold Shift around characters typed with Shift on a US keyboard; needed for QEMU's own VNC "
+    "(Proxmox console), where '@' otherwise lands as '2'",
+)
 @click.pass_context
-def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
+def cli_type(ctx: click.Context, text: str, *, enter: bool, us_shift: bool) -> None:
     """Type a literal string into the guest."""
     # Built before the log line so a configuration that did not load refuses without logging
     # an action that never happens.
@@ -117,7 +126,7 @@ def cli_type(ctx: click.Context, text: str, *, enter: bool) -> None:
     with lib_log_rich.runtime.bind(job_id="cli-type", extra={"command": "type"}):
         logger.info("Typing text into guest")
         with rfb as client:
-            client.type_text(text)
+            client.type_text(text, us_shift=us_shift)
             if enter:
                 client.press("enter")
     safe_console.echo("typed", err=True)

@@ -24,7 +24,7 @@ and are not used by VNC control.
 - `src/vnc_remote_control/domain/behaviors.py`  -  Pure domain functions (greeting)
 - `src/vnc_remote_control/domain/enums.py`  -  Type-safe enums (OutputFormat, DeployTarget)
 - `src/vnc_remote_control/domain/errors.py`  -  Domain exceptions (ConfigurationError, DeliveryError, InvalidRecipientError)
-- `src/vnc_remote_control/domain/keymap.py`  -  Named-key table and `char_keysym` (a character's keysym is its code point; the server owns the layout)
+- `src/vnc_remote_control/domain/keymap.py`  -  Named-key table, `char_keysym` (a character's keysym is its code point; the server owns the layout) and `needs_us_shift` (which characters `type --us-shift` holds Shift for)
 - `src/vnc_remote_control/domain/timing.py`  -  `RfbTimings` value object: the per-event key/click delays, with a `scaled(factor)` helper
 
 ### Application Layer
@@ -121,7 +121,7 @@ and are not used by VNC control.
 - `tests/test_email_shipped_defaults.py`  -  The shipped `[email]` defaults keep the library's attachment protection on
 - `tests/test_enums.py`  -  Domain enum tests
 - `tests/test_errors.py`  -  Domain error types
-- `tests/test_keymap.py`  -  `char_keysym` and the named-key table
+- `tests/test_keymap.py`  -  `char_keysym`, `needs_us_shift` and the named-key table
 - `tests/test_logging.py`  -  Logging configuration model
 - `tests/test_logging_dotenv_isolation.py`  -  Only `LOG_*` lines of a `.env` reach the environment; an invalid `[lib_log_rich]` section or `LOG_*` variable is a configuration failure that leaves logging running
 - `tests/test_mail.py`  -  Email configuration and sending tests (the `integration` ones send real mail)

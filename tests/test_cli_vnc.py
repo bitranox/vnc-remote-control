@@ -80,11 +80,11 @@ def test_unknown_subcommand_is_rejected(managed_traceback_state: None) -> None:
 @pytest.mark.os_agnostic
 def test_type_sends_text(monkeypatch: pytest.MonkeyPatch, managed_traceback_state: None) -> None:
     """type sends literal text and never touches tesseract."""
-    typed: list[str] = []
+    typed: list[tuple[str, bool]] = []
 
     class _TypingClient(_FakeClient):
-        def type_text(self, text: str) -> None:
-            typed.append(text)
+        def type_text(self, text: str, *, us_shift: bool = False) -> None:
+            typed.append((text, us_shift))
 
         def press(self, name: str) -> None:
             return None
@@ -92,7 +92,8 @@ def test_type_sends_text(monkeypatch: pytest.MonkeyPatch, managed_traceback_stat
     monkeypatch.setattr(vnc_cmd, "RfbClient", _TypingClient)
     assert cli_mod.main(["--port", "5901", "type", "a:|"], services_factory=build_production) == 0
     assert cli_mod.main(["--port", "5901", "type", "chkdsk c: /f", "--enter"], services_factory=build_production) == 0
-    assert typed == ["a:|", "chkdsk c: /f"]
+    assert cli_mod.main(["--port", "5901", "type", "--us-shift", "a@A"], services_factory=build_production) == 0
+    assert typed == [("a:|", False), ("chkdsk c: /f", False), ("a@A", True)]
 
 
 @pytest.mark.os_agnostic

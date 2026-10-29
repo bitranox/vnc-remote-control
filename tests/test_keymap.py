@@ -29,3 +29,19 @@ def test_named_keys_cover_common_keys() -> None:
     assert keymap.NAMED_KEYS["backspace"] == keymap.BACKSPACE
     for name in ("tab", "esc", "up", "down", "left", "right", "f8"):
         assert name in keymap.NAMED_KEYS
+
+
+@pytest.mark.os_agnostic
+def test_needs_us_shift_covers_uppercase_and_shifted_symbols() -> None:
+    """Every character on a shifted US key needs Shift; its unshifted twin does not."""
+    for ch in string.ascii_uppercase + '~!@#$%^&*()_+{}|:"<>?':
+        assert keymap.needs_us_shift(ch), ch
+    for ch in string.ascii_lowercase + string.digits + r"`-=[]\;',./ ":
+        assert not keymap.needs_us_shift(ch), ch
+
+
+@pytest.mark.os_agnostic
+def test_needs_us_shift_is_false_beyond_ascii() -> None:
+    """A character with no US key gets no Shift; the server decides what it does."""
+    assert not keymap.needs_us_shift("ä")
+    assert not keymap.needs_us_shift("Ä")

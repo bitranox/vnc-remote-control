@@ -200,17 +200,34 @@ class RfbClient:
             raise ValueError(f"unknown key name {name!r}; known: {known}")
         self.tap(keymap.NAMED_KEYS[key])
 
-    def type_text(self, text: str) -> None:
+    def type_text(self, text: str, *, us_shift: bool = False) -> None:
         """Type ``text`` by sending one literal keysym per character.
 
         Each character's keysym is its code point; the layout-aware server maps
         it to the guest's keyboard layout. A newline is sent as Return.
+
+        Args:
+            text: The characters to type.
+            us_shift: Hold Shift_L around every character that needs Shift on a
+                US keyboard. Needed for a server that maps a keysym to its US
+                scancode without pressing Shift (QEMU's own VNC, the Proxmox
+                console); leave it off for a layout-aware server such as openvmm.
         """
         for ch in text:
             if ch == "\n":
                 self.tap(keymap.RETURN)
-                continue
-            self.tap(keymap.char_keysym(ch))
+            elif us_shift and keymap.needs_us_shift(ch):
+                self._tap_shifted(keymap.char_keysym(ch))
+            else:
+                self.tap(keymap.char_keysym(ch))
+
+    def _tap_shifted(self, keysym: int) -> None:
+        """Tap ``keysym`` while Shift_L is held down."""
+        self._key(keymap.SHIFT_L, down=True)
+        time.sleep(self._timings.key_down_hold)
+        self.tap(keysym)
+        self._key(keymap.SHIFT_L, down=False)
+        time.sleep(self._timings.key_up_gap)
 
     # -- framebuffer ---------------------------------------------------------
     def capture(self) -> bytearray:

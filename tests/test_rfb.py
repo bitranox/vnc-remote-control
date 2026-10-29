@@ -115,6 +115,34 @@ def test_type_returns_none(client: RfbClient) -> None:
     assert client.type_text("@|") is None
 
 
+@pytest.mark.os_agnostic
+def test_type_us_shift_wraps_only_shifted_chars(client: RfbClient) -> None:
+    """With us_shift, '@' and 'A' are sent inside a Shift_L press; 'a' and '2' are not."""
+    client.type_text("a@A2", us_shift=True)
+    events = _key_events(_sent(client))
+    assert events == [
+        (1, ord("a")),
+        (0, ord("a")),
+        (1, keymap.SHIFT_L),
+        (1, ord("@")),
+        (0, ord("@")),
+        (0, keymap.SHIFT_L),
+        (1, keymap.SHIFT_L),
+        (1, ord("A")),
+        (0, ord("A")),
+        (0, keymap.SHIFT_L),
+        (1, ord("2")),
+        (0, ord("2")),
+    ]
+
+
+@pytest.mark.os_agnostic
+def test_type_us_shift_still_sends_newline_as_return(client: RfbClient) -> None:
+    """A newline stays a bare Return tap in us_shift mode."""
+    client.type_text("\n", us_shift=True)
+    assert _key_events(_sent(client)) == [(1, keymap.RETURN), (0, keymap.RETURN)]
+
+
 # -- handshake / framebuffer wire tests -------------------------------------
 
 

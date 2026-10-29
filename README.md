@@ -17,7 +17,9 @@ click, and grab a screenshot. It speaks plain RFB (None or VNC-password security
 raw encoding) and sends literal keysyms like a standard VNC client, so it works
 with any VNC/RFB server; the guest keyboard layout is a server-side setting, not
 something this client compensates for. A layout-aware server such as openvmm is
-the ideal target (see the keyboard section), but it is not required.
+the ideal target (see the keyboard section), but it is not required: for QEMU's
+own VNC server (a plain Proxmox VM console), `type --us-shift` adds the Shift
+presses that server leaves out.
 
 The CLI is styled with [rich-click](https://github.com/ewels/rich-click); the RFB
 protocol and pixel drawing are pure standard library, and screenshots are written
@@ -285,9 +287,23 @@ match the guest. A driving LLM would *see* the wrong characters land in a
 screenshot and can flag it, but it does not, and should not, try to compensate
 per keystroke.
 
-Plainer VNC servers that map keysyms assuming a fixed (often US) layout still work
-for any text that layout can produce; a layout-aware server such as openvmm is
-what makes arbitrary characters and non-US layouts type reliably.
+### QEMU's own VNC server: `type --us-shift`
+
+QEMU's built-in VNC server, which is the console of a plain Proxmox VM, is not
+layout-aware in this sense. It turns a keysym into the scancode of its key in the
+VM's keymap (default en-us) but presses no Shift for it, so shifted symbols lose
+their Shift: `type 'x@A2Z|'` lands as `x2A2Z\` (letters keep their case). A real
+VNC viewer works there only because the person holds Shift.
+
+`type --us-shift` does the same: it holds Shift_L around every character a US
+keyboard types with Shift, and the text then lands intact. It is opt-in, because
+on a layout-aware server such as openvmm an extra Shift would change the
+character. The guest's own layout must match the VM's keymap as well; a German
+guest layout under the en-us keymap turns `-` into `ss`.
+
+```bash
+vnc-remote-control --port 5978 type --us-shift 'root@pam' --enter
+```
 
 ## Further Documentation
 

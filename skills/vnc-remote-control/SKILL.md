@@ -43,7 +43,7 @@ Every command needs `--port`; `--host` defaults to `127.0.0.1`.
 
 | Command                                       | Does                                                                                            |
 |-----------------------------------------------|-------------------------------------------------------------------------------------------------|
-| `type "text" [--enter]`                       | Type a literal string into the focused field (`--enter` adds Return)                            |
+| `type "text" [--enter] [--us-shift]`          | Type a literal string into the focused field (`--enter` adds Return; `--us-shift`: see below)   |
 | `key <name>`                                  | Press one named key: `enter`, `tab`, `esc`, arrows, `f1`-`f12`, ...                             |
 | `click X Y`                                   | Left-click at an absolute framebuffer pixel                                                     |
 | `screenshot out.png [--mark X,Y] [--grid 50]` | Write the native-resolution PNG; prints `resolution: WxH`; optional crosshair / coordinate grid |
@@ -74,8 +74,16 @@ coordinate. (Past "wrong pixel" failures came from reading coordinates off a sca
 - **Keyboard layout is server-side, not yours.** You pass the text you want; the client puts each
   character's Unicode code point on the wire as its keysym (like any VNC client). Your own laptop
   layout is irrelevant. A layout-aware server (openvmm; on Proxmox the ovm shim derives it from the
-  VM's `keyboard:` key) maps keysyms to the guest layout. If wrong characters land, the SERVER layout
-  is misconfigured - fix it there, never compensate per keystroke on the client.
+  VM's `keyboard:` key) maps keysyms to the guest layout. If wrong characters land on such a server,
+  its layout is misconfigured - fix it there, never compensate per keystroke on the client.
+- **QEMU's own VNC server needs `type --us-shift`.** The console of a plain Proxmox VM is QEMU's
+  VNC, which turns a keysym into the scancode of its key in the VM's keymap (`keyboard:`, default
+  en-us) but presses no Shift for it: `type 'x@A2Z|'` lands as `x2A2Z\` (letters keep their case,
+  shifted symbols lose Shift). `--us-shift` holds Shift_L around every character a US keyboard
+  types with Shift, and the same text then lands intact. Leave it off for a layout-aware server
+  (openvmm), where an extra Shift would change the character. The guest's own keyboard layout must
+  match the VM's keymap: a German guest layout under the default en-us keymap turns `-` into `ss`,
+  so pick U.S. English in an installer driven this way.
 - **Sluggish guests drop fast input.** Slow it down: `--delay-scale 2` multiplies every delay, or set
   individual gaps via `--set vnc.key_up_gap=0.2` (keys: `key_down_hold`, `key_up_gap`, `click_move_gap`,
   `click_hold`, `click_release_gap`).
@@ -108,5 +116,17 @@ The VM's console is a VNC/RFB server on the host. Reach it directly, or SSH-tunn
 port with `ssh -N -L <local-port>:127.0.0.1:<console-port> <user>@<host>`, then point the client at
 `127.0.0.1:<local-port>` (`-N` because no remote command is wanted, and binding the forward to the
 host's loopback keeps the console off its network). `openvmm` is the ideal layout-aware target so arbitrary
-characters and non-US layouts type reliably; plainer VNC servers still work for any text a fixed
-(usually US) layout can produce.
+characters and non-US layouts type reliably.
+
+A plain Proxmox QEMU VM is different in three ways:
+
+- **Its console is a unix socket**, `/var/run/qemu-server/<vmid>.vnc`, not a TCP port. Forward a
+  local port to it: `ssh -N -L 127.0.0.1:<local-port>:/var/run/qemu-server/<vmid>.vnc root@<node>`.
+- **It requires VNC password auth.** Set one in QEMU's monitor and keep it from expiring, feeding
+  the password on stdin so it never sits in argv: `{ printf 'set_password vnc '; cat pw.txt;
+  printf 'expire_password vnc never\n'; } | ssh root@<node> 'qm monitor <vmid>'` (use at most 8
+  characters: VNC authentication reads no more). Without `expire_password` the login fails with "VNC authentication failed".
+  Opening the VM's console in the Proxmox web UI sets a new password and replaces yours, so set it
+  again when authentication suddenly starts failing mid-session. It lives only in the running QEMU
+  process and is gone at the next VM start.
+- **It is not layout-aware:** type with `--us-shift` (see Gotchas).
