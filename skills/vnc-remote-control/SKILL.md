@@ -83,7 +83,8 @@ coordinate. (Past "wrong pixel" failures came from reading coordinates off a sca
   types with Shift, and the same text then lands intact. Leave it off for a layout-aware server
   (openvmm), where an extra Shift would change the character. The guest's own keyboard layout must
   match the VM's keymap: a German guest layout under the default en-us keymap turns `-` into `ss`,
-  so pick U.S. English in an installer driven this way.
+  so pick U.S. English in an installer driven this way. All of this was measured with the default
+  en-us keymap; whether `--us-shift` fits a VM with another `keyboard:` value is untested.
 - **Sluggish guests drop fast input.** Slow it down: `--delay-scale 2` multiplies every delay, or set
   individual gaps via `--set vnc.key_up_gap=0.2` (keys: `key_down_hold`, `key_up_gap`, `click_move_gap`,
   `click_hold`, `click_release_gap`).
@@ -101,7 +102,8 @@ coordinate. (Past "wrong pixel" failures came from reading coordinates off a sca
 
 ## Authentication
 
-- **None security** (an openvmm/hypervisor console on localhost - the typical Proxmox case) needs nothing.
+- **None security** (an openvmm console on localhost) needs nothing. A plain Proxmox QEMU VM's console
+  asks for a VNC password instead: see "Proxmox / no-network VMs".
 - **VNC password:** pass it via the `VNC_REMOTE_CONTROL_PASSWORD` env var (which `--password` reads by
   default), NOT on the command line - a password in argv is visible in `ps`. TLS/VeNCrypt and Apple
   Remote Desktop auth are not supported. (demand gated)
@@ -122,11 +124,22 @@ A plain Proxmox QEMU VM is different in three ways:
 
 - **Its console is a unix socket**, `/var/run/qemu-server/<vmid>.vnc`, not a TCP port. Forward a
   local port to it: `ssh -N -L 127.0.0.1:<local-port>:/var/run/qemu-server/<vmid>.vnc root@<node>`.
-- **It requires VNC password auth.** Set one in QEMU's monitor and keep it from expiring, feeding
-  the password on stdin so it never sits in argv: `{ printf 'set_password vnc '; cat pw.txt;
-  printf 'expire_password vnc never\n'; } | ssh root@<node> 'qm monitor <vmid>'` (use at most 8
-  characters: VNC authentication reads no more). Without `expire_password` the login fails with "VNC authentication failed".
+- **It requires VNC password auth.** Keep the password in a file on the machine you drive from,
+  outside any repository (mode 600, at most 8 characters: VNC authentication reads no more), set
+  it in QEMU's monitor and keep it from expiring. `printf` is a shell builtin, so the password
+  never shows in a process list, and `$(cat ...)` drops a trailing newline, so the two monitor
+  commands stay on their own lines:
+
+  ```bash
+  printf 'set_password vnc %s\nexpire_password vnc never\n' "$(cat pw.txt)" \
+    | ssh root@<node> 'qm monitor <vmid>'
+  VNC_REMOTE_CONTROL_PASSWORD="$(cat pw.txt)" vnc-remote-control --port <local-port> \
+    type --us-shift 'root@pam' --enter
+  ```
+
+  The client takes the same password through its environment variable. Without
+  `expire_password` the login fails with "VNC authentication failed". Delete the file when done.
   Opening the VM's console in the Proxmox web UI sets a new password and replaces yours, so set it
   again when authentication suddenly starts failing mid-session. It lives only in the running QEMU
   process and is gone at the next VM start.
-- **It is not layout-aware:** type with `--us-shift` (see Gotchas).
+- **It is not layout-aware:** with the default en-us keymap, type with `--us-shift` (see Gotchas).
