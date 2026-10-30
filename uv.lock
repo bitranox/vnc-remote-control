@@ -14,7 +14,6 @@ exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
 btx-lib-mail = false
-certifi = "2026-10-23T11:36:17Z"
 hatchling = "2026-10-28T02:27:31Z"
 lib-cli-exit-tools = false
 lib-layered-config = false
@@ -82,16 +81,16 @@ wheels = [
 
 [[package]]
 name = "btx-lib-mail"
-version = "4.6.0"
+version = "4.6.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lib-cli-exit-tools" },
     { name = "pydantic" },
     { name = "rich-click" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/36/ee/b154514730aad491acf9b3df30548573f4855c131a3f8fa8e704e29a6416/btx_lib_mail-4.6.0.tar.gz", hash = "sha256:42ceb3041541855d141e5a4b144cee8341d052c2cfbbcf5054f84363aa835f7c", size = 310414, upload-time = "2026-10-24T13:07:32.067Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/66/f1/3565ebd694f3ac6b6e8b5c0737b59ab6a1ad810f5bd9515b7a9354cb6eed/btx_lib_mail-4.6.4.tar.gz", hash = "sha256:4eb47f11acb04dbd0fbe44c31fe7668b6365a500751ffc2c31fd860e9be9432c", size = 310709, upload-time = "2026-10-30T10:47:01.54Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ee/55/74067275caea34be7f974a0cc45276f08caf33f7c5bfb9e1a8f11cc241a0/btx_lib_mail-4.6.0-py3-none-any.whl", hash = "sha256:1d752fa94b1d4009e53eaa75bd52a1a473c89d949e5a275bf1f433cb66df3aad", size = 120489, upload-time = "2026-10-24T13:07:30.479Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/f8/02a3ac9f54eef9a03a331f4f1d1a5a9bb57b5905236f5a864d28039ebd36/btx_lib_mail-4.6.4-py3-none-any.whl", hash = "sha256:ff30b273c5a32159f9d9bd51880a2582f8aaf2f72316596bdc26ce0fbaeb6084", size = 120498, upload-time = "2026-10-30T10:46:59.952Z" },
 ]
 
 [[package]]
@@ -100,7 +99,7 @@ version = "1.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "colorama", marker = "os_name == 'nt'" },
-    { name = "importlib-metadata", marker = "python_full_version < '3.10.2'" },
+    { name = "importlib-metadata", version = "9.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10.2'" },
     { name = "packaging" },
     { name = "pyproject-hooks" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
@@ -1306,12 +1305,30 @@ wheels = [
 name = "importlib-metadata"
 version = "9.0.1"
 source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "python_full_version < '3.11'",
+]
 dependencies = [
     { name = "zipp" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/6f/7e/1e7e8dc30634b93ebb3d58a3dea569ad146e656218d3960ab04f62047b29/importlib_metadata-9.0.1.tar.gz", hash = "sha256:ab830580bc0ef3db61ce8fae716389e5462b67e033018bab6d8f80ef17172f99", size = 59124, upload-time = "2026-08-28T15:30:34.646Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b3/55/ecca97ae19075f1fac62def77731e7f535e6c1fb8f92ff08160c5e6dade8/importlib_metadata-9.0.1-py3-none-any.whl", hash = "sha256:bba5600596a7e21f3eef53281cf28d6a5195634d2f2b78ff9501a3272c6eaab0", size = 27920, upload-time = "2026-08-28T15:30:33.433Z" },
+]
+
+[[package]]
+name = "importlib-metadata"
+version = "9.1.0"
+source = { registry = "https://pypi.org/simple" }
+resolution-markers = [
+    "(python_full_version >= '3.11' and python_full_version < '3.14' and sys_platform != 'emscripten') or (python_full_version >= '3.15' and sys_platform != 'emscripten') or (python_full_version == '3.11.*' and sys_platform == 'emscripten')",
+]
+dependencies = [
+    { name = "zipp" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/16/f9/795a9a483b9f0168ab3e32906039140e233a546c04dec35dd671733de369/importlib_metadata-9.1.0.tar.gz", hash = "sha256:9607fb24f95d4e0b1c17d57ec4604357d76d3f0d154f19fd4861f2e31c8e4065", size = 62078, upload-time = "2026-10-22T23:22:14.12Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a4/9f/2e33795e8765420ac43de1f29fe3d827ab4eaa45cbcf4a5de83555a3f9dd/importlib_metadata-9.1.0-py3-none-any.whl", hash = "sha256:626c65eddcd23c0ee0ffb17567aa882f8cfce0e552c424f2fa37c8b679374078", size = 28434, upload-time = "2026-10-22T23:22:12.531Z" },
 ]
 
 [[package]]
@@ -1375,7 +1392,8 @@ name = "keyring"
 version = "25.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "importlib-metadata", marker = "python_full_version < '3.12'" },
+    { name = "importlib-metadata", version = "9.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
+    { name = "importlib-metadata", version = "9.1.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.11.*'" },
     { name = "jaraco-classes" },
     { name = "jaraco-context" },
     { name = "jaraco-functools" },
@@ -1402,7 +1420,7 @@ wheels = [
 
 [[package]]
 name = "lib-layered-config"
-version = "7.5.0"
+version = "7.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "lib-cli-exit-tools" },
@@ -1411,9 +1429,9 @@ dependencies = [
     { name = "rtoml", marker = "python_full_version < '3.14'" },
     { name = "tomli", marker = "python_full_version == '3.14.*'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6f/3d/51848087230e346be8dd80fd908e1bb74c943d2fe6009b6e07ebea775931/lib_layered_config-7.5.0.tar.gz", hash = "sha256:86e95abda239ef3a33085a7e03f60b56120a8a99f723c4c5e73948942e5c22ba", size = 542191, upload-time = "2026-10-29T22:44:36.531Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/77/31/cc82835b33b0fd08ad70341e5932b981d34fcd4f44ff6c3af3f5737d2caa/lib_layered_config-7.6.1.tar.gz", hash = "sha256:29e3e89a6f187e05f685582ef5fb9c603f2c9e8bb2e085c42382d163216280f5", size = 549506, upload-time = "2026-10-30T10:29:58.81Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/e5/698cffb3bd8106d06617e5dd6b520388f550369ec2120e67d8bc7667ef6c/lib_layered_config-7.5.0-py3-none-any.whl", hash = "sha256:f49e106f3903d74b5f6d826a99e9f639debece8a9b290103a6b52736cfa4ce17", size = 164624, upload-time = "2026-10-29T22:44:35.151Z" },
+    { url = "https://files.pythonhosted.org/packages/2a/95/8a2ed2453804729af3e21960a91432d08932c139c38a4f100f2fac5e2a71/lib_layered_config-7.6.1-py3-none-any.whl", hash = "sha256:02cf5a0ff4b4972a877b7217b45ea4440dfde6f93472178dd5dc6a3a5ab23263", size = 167590, upload-time = "2026-10-30T10:29:57.081Z" },
 ]
 
 [[package]]
@@ -2887,7 +2905,7 @@ wheels = [
 
 [[package]]
 name = "vnc-remote-control"
-version = "1.2.0"
+version = "1.2.1"
 source = { editable = "." }
 dependencies = [
     { name = "btx-lib-mail" },
@@ -2935,7 +2953,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.9.4" },
-    { name = "btx-lib-mail", specifier = ">=4.6.0" },
+    { name = "btx-lib-mail", specifier = ">=4.6.4" },
     { name = "build", marker = "extra == 'dev'", specifier = ">=1.6.1" },
     { name = "certifi", marker = "extra == 'dev'", specifier = ">=2026.10.23" },
     { name = "click", specifier = ">=8.5.0" },
@@ -2946,7 +2964,7 @@ requires-dist = [
     { name = "import-linter", marker = "extra == 'dev'", specifier = ">=2.15" },
     { name = "jaraco-context", marker = "extra == 'dev'", specifier = ">=6.1.2" },
     { name = "lib-cli-exit-tools", specifier = ">=2.4.1" },
-    { name = "lib-layered-config", specifier = ">=7.5.0" },
+    { name = "lib-layered-config", specifier = ">=7.6.1" },
     { name = "lib-log-rich", specifier = ">=8.1.2" },
     { name = "orjson", specifier = ">=3.13.0" },
     { name = "pillow", specifier = ">=12.3.0" },

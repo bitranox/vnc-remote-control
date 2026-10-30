@@ -6,6 +6,13 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-10-30
+
+### Docs
+
+- The `vnc-remote-control` skill installs or upgrades in Step 0 (`uv tool install --upgrade`)
+  and sends all of `qm monitor`'s output to `/dev/null` when setting a VNC password.
+
 ## [1.2.0] - 2026-10-29
 
 ### Added
