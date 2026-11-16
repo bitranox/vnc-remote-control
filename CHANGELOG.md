@@ -6,6 +6,14 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-11-16
+
+### Added
+
+- The `vnc-remote-control` skill has a "VMware Workstation VMs" section: switching on the VM's own VNC
+  server in its `.vmx` file, reaching it through an SSH tunnel, and pressing space past the "Press any key to
+  boot from CD or DVD" prompt of a headless Windows guest booting from an EFI ISO.
+
 ## [1.2.2] - 2026-11-12
 
 ### Fixed
