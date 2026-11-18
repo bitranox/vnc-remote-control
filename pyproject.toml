@@ -8,9 +8,9 @@ dependencies = [
     "rich-click>=1.9.9",
     # Imported directly (adapters/cli/main.py, commands/config.py), not only through rich-click.
     "click>=8.5.1",
-    "lib_cli_exit_tools>=2.4.1",
+    "lib_cli_exit_tools>=2.5.0",
     # 6.4.2: validate_config, the check config --profile runs, refuses exactly what init() refuses.
-    "lib_log_rich>=8.2.1",
+    "lib_log_rich>=8.2.2",
     "python-dotenv>=1.2.4",
     "lib_layered_config>=8.1.0",
     "btx_lib_mail>=4.6.4",
