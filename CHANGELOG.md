@@ -6,6 +6,13 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Fixed
+
+- `[tool.uv] exclude-newer-package` exempts `vnc-remote-control` itself from the 7-day cooldown. Without it,
+  `uv pip install vnc-remote-control` run inside the repository (the CI Quickstart notebook does this) picked
+  a release older than the cooldown while the exempted libraries resolved to their newest release, so a
+  release that adapts to a breaking library change failed its own notebook job for a week.
+
 ## [1.2.4] - 2026-11-18
 
 ### Changed
