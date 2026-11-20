@@ -6,6 +6,8 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-11-20
+
 ### Fixed
 
 - An invalid `[vnc]` value (`--set vnc.key_up_gap=-1`, or `abc`) makes a VNC command exit 78 with one
