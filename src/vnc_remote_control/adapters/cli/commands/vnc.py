@@ -26,12 +26,13 @@ import lib_log_rich.runtime
 import rich_click as click
 
 from ... import ocr
-from ...config.vnc import build_rfb_timings
+from ...config.vnc import InvalidVncConfigError, build_rfb_timings
 from ...rfb import RfbClient, RfbError
 from .. import safe_console
 from ..config_load import require_config
 from ..constants import CLICK_CONTEXT_SETTINGS
 from ..context import get_cli_context
+from ..exit_codes import ExitCode
 from ..typed_click import argument, option
 
 logger = logging.getLogger(__name__)
@@ -55,13 +56,19 @@ def _client(ctx: click.Context) -> RfbClient:
     ``--delay-scale`` option. The client is not connected until it is entered.
 
     Raises:
-        click.exceptions.Exit: The configuration could not be loaded (exit 78): the
-            timings would otherwise silently fall back to the defaults.
+        click.exceptions.Exit: The configuration could not be loaded, or its ``[vnc]``
+            section holds an invalid value (exit 78, one ``Error: vnc.<key>: ...`` line per
+            problem): the timings would otherwise silently fall back to the defaults.
     """
     host, port, password = _server(ctx)
     cli_ctx = get_cli_context(ctx)
-    timings = build_rfb_timings(require_config(ctx, cli_ctx)).scaled(cli_ctx.delay_scale)
-    return RfbClient(host, port, password=password, timings=timings)
+    try:
+        configured = build_rfb_timings(require_config(ctx, cli_ctx))
+    except InvalidVncConfigError as exc:
+        for problem in exc.problems:
+            safe_console.echo(f"Error: {problem}", err=True)
+        ctx.exit(ExitCode.CONFIG_ERROR)
+    return RfbClient(host, port, password=password, timings=configured.scaled(cli_ctx.delay_scale))
 
 
 def _parse_xy(_ctx: click.Context, _param: click.Parameter, value: str | None) -> tuple[int, int] | None:

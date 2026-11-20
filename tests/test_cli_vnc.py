@@ -16,6 +16,8 @@ from vnc_remote_control.domain.timing import RfbTimings
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+    from click.testing import CliRunner
+
     from lib_layered_config import Config
 
 
@@ -270,3 +272,23 @@ def test_build_rfb_timings_reads_vnc_section(config_factory: Callable[[dict[str,
     assert _close(timings.click_hold, 0.3)
     # Unspecified keys keep the tuned defaults.
     assert _close(timings.key_up_gap, 0.09)
+
+
+@pytest.mark.os_agnostic
+@pytest.mark.parametrize("value", ["-1", "abc"], ids=["not-positive", "not-a-number"])
+def test_an_invalid_vnc_setting_refuses_with_exit_78_and_one_line(
+    cli_runner: CliRunner, monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    """A bad ``[vnc]`` value names its key on one line and exits 78, like the other sections."""
+    monkeypatch.setattr(vnc_cmd, "RfbClient", _FakeClient)
+
+    result = cli_runner.invoke(
+        cli_mod.cli, ["--port", "5901", "--set", f"vnc.key_up_gap={value}", "click", "1", "2"], obj=build_production
+    )
+
+    assert result.exit_code == 78, result.output
+    refusals = [line for line in result.stderr.splitlines() if line.startswith("Error: ")]
+    assert len(refusals) == 1, result.stderr
+    assert refusals[0].startswith("Error: vnc.key_up_gap: "), result.stderr
+    assert "errors.pydantic.dev" not in result.stderr
+    assert "Traceback" not in result.stderr

@@ -9,8 +9,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from ...domain.errors import ConfigurationError
 from ...domain.timing import RfbTimings
 
 if TYPE_CHECKING:
@@ -31,6 +32,44 @@ class VncConfigModel(BaseModel):
     click_release_gap: float = Field(default=_DEFAULTS.click_release_gap, gt=0)
 
 
+class InvalidVncConfigError(ConfigurationError):
+    """The ``[vnc]`` section holds a value the timings refuse: one ``vnc.<key>: <reason>`` per problem.
+
+    A line names the key and pydantic's reason and never repeats the refused value, so the CLI
+    can print it as is, one ``Error:`` line each, like the other configuration sections.
+
+    Attributes:
+        problems: One line per refused setting.
+
+    Example:
+        >>> try:
+        ...     VncConfigModel.model_validate({"key_up_gap": -1})
+        ... except ValidationError as exc:
+        ...     print(InvalidVncConfigError.from_validation_error(exc))
+        vnc.key_up_gap: Input should be greater than 0
+    """
+
+    def __init__(self, problems: list[str]) -> None:
+        super().__init__("; ".join(problems))
+        self.problems = problems
+
+    @classmethod
+    def from_validation_error(cls, error: ValidationError) -> InvalidVncConfigError:
+        """Build the refusal from pydantic's error, one line per problem, without the input.
+
+        Args:
+            error: The error validating the ``[vnc]`` section raised.
+
+        Returns:
+            The refusal naming each key; a problem with the whole section reads ``vnc: <reason>``.
+        """
+        lines = [
+            f"{'.'.join(('vnc', *map(str, item['loc'])))}: {item['msg']}"
+            for item in error.errors(include_url=False, include_input=False)
+        ]
+        return cls(lines)
+
+
 def build_rfb_timings(config: Config) -> RfbTimings:
     """Build :class:`RfbTimings` from the ``[vnc]`` section of ``config``.
 
@@ -40,9 +79,15 @@ def build_rfb_timings(config: Config) -> RfbTimings:
     Returns:
         The configured event timings, or the tuned defaults when the section is
         absent or empty.
+
+    Raises:
+        InvalidVncConfigError: A value in the section is not a positive number.
     """
     raw: object = config.get("vnc", default={})
-    parsed = VncConfigModel.model_validate(cast("dict[str, object]", raw) if raw else {})
+    try:
+        parsed = VncConfigModel.model_validate(cast("dict[str, object]", raw) if raw else {})
+    except ValidationError as exc:
+        raise InvalidVncConfigError.from_validation_error(exc) from None
     return RfbTimings(
         key_down_hold=parsed.key_down_hold,
         key_up_gap=parsed.key_up_gap,
@@ -52,4 +97,4 @@ def build_rfb_timings(config: Config) -> RfbTimings:
     )
 
 
-__all__ = ["VncConfigModel", "build_rfb_timings"]
+__all__ = ["InvalidVncConfigError", "VncConfigModel", "build_rfb_timings"]

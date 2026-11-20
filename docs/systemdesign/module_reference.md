@@ -38,7 +38,7 @@ and are not used by VNC control.
 - `src/vnc_remote_control/adapters/config/deploy.py`  -  Configuration deployment
 - `src/vnc_remote_control/adapters/config/display.py`  -  Configuration display (TOML/JSON output, redaction)
 - `src/vnc_remote_control/adapters/config/overrides.py`  -  CLI `--set` override parsing and deep-merge
-- `src/vnc_remote_control/adapters/config/vnc.py`  -  `[vnc]` section model (`VncConfigModel`) and `build_rfb_timings`, mapping it onto `RfbTimings` (scaled by `--delay-scale`)
+- `src/vnc_remote_control/adapters/config/vnc.py`  -  `[vnc]` section model (`VncConfigModel`) and `build_rfb_timings`, mapping it onto `RfbTimings` (scaled by `--delay-scale`); an invalid value raises `InvalidVncConfigError`, which the VNC commands report as one `Error: vnc.<key>: ...` line and exit 78
 - `src/vnc_remote_control/adapters/rfb.py`  -  `RfbClient`: RFB 003.008 handshake (None and VNC-password security), raw framebuffer capture, `screenshot` (PNG via Pillow), `click`, literal-keysym `type`/`press`, and the crosshair/grid overlays (`draw_crosshair`, `draw_grid`)
 - `src/vnc_remote_control/adapters/ocr.py`  -  tesseract TSV parsing into `Word` objects with click centers, plus matching helpers
 - `src/vnc_remote_control/adapters/email/__init__.py`  -  Email adapter exports
@@ -204,29 +204,29 @@ POSIX-conventional exit codes defined in `adapters/cli/exit_codes.py`:
 
 **Command:** `vnc-remote-control`
 
-| Option                         | Description                                                       |
-|--------------------------------|-------------------------------------------------------------------|
-| `--version`                    | Show version and exit                                             |
-| `--host HOST`                  | RFB server host (default: 127.0.0.1)                              |
-| `--port PORT`                  | RFB server TCP port (required by the VNC subcommands)             |
-| `--password PASS`              | VNC password (prefer the `VNC_REMOTE_CONTROL_PASSWORD` env var)   |
-| `--delay-scale N`              | Multiply every key/click delay (raise it for a sluggish guest)    |
-| `--traceback / --no-traceback` | Show full Python traceback on errors                              |
-| `--profile NAME`               | Load configuration from a named profile                           |
-| `--set SECTION.KEY=VALUE`      | Override configuration setting (repeatable)                       |
-| `--env-file PATH`              | Explicit `.env` file path                                         |
-| `-h, --help`                   | Show help and exit                                                |
+| Option                         | Description                                                     |
+|--------------------------------|-----------------------------------------------------------------|
+| `--version`                    | Show version and exit                                           |
+| `--host HOST`                  | RFB server host (default: 127.0.0.1)                            |
+| `--port PORT`                  | RFB server TCP port (required by the VNC subcommands)           |
+| `--password PASS`              | VNC password (prefer the `VNC_REMOTE_CONTROL_PASSWORD` env var) |
+| `--delay-scale N`              | Multiply every key/click delay (raise it for a sluggish guest)  |
+| `--traceback / --no-traceback` | Show full Python traceback on errors                            |
+| `--profile NAME`               | Load configuration from a named profile                         |
+| `--set SECTION.KEY=VALUE`      | Override configuration setting (repeatable)                     |
+| `--env-file PATH`              | Explicit `.env` file path                                       |
+| `-h, --help`                   | Show help and exit                                              |
 
 ### VNC subcommands
 
-| Subcommand                                   | Description                                                                |
-|----------------------------------------------|----------------------------------------------------------------------------|
-| `type TEXT [--enter]`                        | Type a string into the guest (literal keysyms)                             |
-| `key NAME`                                   | Press a single named key (enter, tab, esc, arrows, function keys)          |
-| `click X Y`                                  | Left-click at a pixel position                                             |
+| Subcommand                                   | Description                                                               |
+|----------------------------------------------|---------------------------------------------------------------------------|
+| `type TEXT [--enter]`                        | Type a string into the guest (literal keysyms)                            |
+| `key NAME`                                   | Press a single named key (enter, tab, esc, arrows, function keys)         |
+| `click X Y`                                  | Left-click at a pixel position                                            |
 | `screenshot OUTFILE [--mark X,Y] [--grid N]` | Save the native-resolution framebuffer to a PNG; prints `resolution: WxH` |
-| `ocr [--grep PATTERN] [--min-confidence N]`  | List on-screen words with their click centers and confidence               |
-| `click-text PATTERN [--min-confidence N]`    | Click the first on-screen word matching a pattern                          |
+| `ocr [--grep PATTERN] [--min-confidence N]`  | List on-screen words with their click centers and confidence              |
+| `click-text PATTERN [--min-confidence N]`    | Click the first on-screen word matching a pattern                         |
 
 #### Keyboard model
 

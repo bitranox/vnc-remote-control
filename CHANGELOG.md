@@ -8,6 +8,9 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ### Fixed
 
+- An invalid `[vnc]` value (`--set vnc.key_up_gap=-1`, or `abc`) makes a VNC command exit 78 with one
+  `Error: vnc.<key>: <reason>` line, like the other configuration sections, instead of exit 22 and
+  pydantic's multi-line report.
 - `[tool.uv] exclude-newer-package` exempts `vnc-remote-control` itself from the 7-day cooldown. Without it,
   `uv pip install vnc-remote-control` run inside the repository (the CI Quickstart notebook does this) picked
   a release older than the cooldown while the exempted libraries resolved to their newest release, so a
