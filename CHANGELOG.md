@@ -15,6 +15,15 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
   `uv pip install vnc-remote-control` run inside the repository (the CI Quickstart notebook does this) picked
   a release older than the cooldown while the exempted libraries resolved to their newest release, so a
   release that adapts to a breaking library change failed its own notebook job for a week.
+- Docs: `CONFIG.md` documents the `[vnc]` section (keys, defaults, how to set them); the README and
+  the `vnc-remote-control` skill say only the six VNC commands need `--port`; the README names the
+  libraries the RFB client uses (cryptography for VNC auth, Pillow for overlays and PNG); and
+  `CONTRIBUTING.md` points at `docs/systemdesign/module_reference.md` instead of a file clones lack.
+- The integration tests that send real mail skip when no recipient is configured, instead of
+  failing with "No recipients configured".
+- `pyproject.toml` no longer carries a `[tool.pip-audit] ignore-vulns` list: bmk audits the project's own
+  `.venv`, where none of the eight listed advisories applies, so the list suppressed nothing and would only
+  have hidden a future finding under one of those ids.
 
 ## [1.2.4] - 2026-11-18
 
