@@ -220,8 +220,8 @@ events typed too fast. There are two ways to slow things down:
   ```
 
   The keys are `key_down_hold`, `key_up_gap`, `click_move_gap`, `click_hold`, and
-  `click_release_gap`; see `CONFIG.md` and the bundled defaults for the documented
-  values. `--delay-scale` applies on top of whatever the config resolves to.
+  `click_release_gap`; `CONFIG.md` ("The `[vnc]` Section") lists each one with its
+  default. `--delay-scale` applies on top of whatever the config resolves to.
 
 ## Driving with an LLM (Claude)
 

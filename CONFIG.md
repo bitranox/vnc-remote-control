@@ -512,6 +512,26 @@ The file must exist and be readable; Click validates this before the command run
 
 The `defaultconfig.toml` and files in `defaultconfig.d/` (bundled with the package) provide baseline values. These serve as the fallback when no external configuration files are deployed.
 
+### The `[vnc]` Section (Event Timing)
+
+`defaultconfig.d/60-vnc.toml` sets the delays, in seconds, that the VNC commands insert between
+the down and up edges of each key and pointer event. A sluggish guest can drop events sent too
+fast: raise the delay that matters, or scale them all with the global `--delay-scale` option,
+which applies on top of whatever the configuration resolves to.
+
+| Key                 | Default | What it delays                                       |
+|---------------------|---------|------------------------------------------------------|
+| `key_down_hold`     | 0.05    | Between a key-down and the matching key-up edge      |
+| `key_up_gap`        | 0.09    | After a key-up edge, before the next key is sent     |
+| `click_move_gap`    | 0.1     | After moving the pointer, before pressing the button |
+| `click_hold`        | 0.12    | Between a button-down and the button-up edge         |
+| `click_release_gap` | 0.2     | After releasing the button                           |
+
+Each value must be a positive number. Set one in a config file, as an environment variable
+(`VNC_REMOTE_CONTROL___VNC__KEY_UP_GAP=0.2`), in a `.env` file (`VNC__KEY_UP_GAP=0.2`), or with
+`--set vnc.key_up_gap=0.2`. An invalid value makes a VNC command exit 78 with one
+`Error: vnc.<key>: <reason>` line.
+
 ---
 
 ## Customization Best Practices
