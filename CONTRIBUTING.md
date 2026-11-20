@@ -18,7 +18,7 @@ Thanks for helping improve **vnc-remote-control**. The sections below summarise 
 
 ## 3. Coding Standards
 
-- Apply the repository's Clean Architecture / SOLID rules (see `CLAUDE.md` and the system prompts listed there).
+- Apply the repository's Clean Architecture / SOLID rules: the layers are described in `docs/systemdesign/module_reference.md`, and the import-linter contracts in `pyproject.toml` enforce them (`make test` runs `lint-imports`).
 - Prefer small, single-purpose modules and functions; avoid mixing orthogonal concerns.
 - Free functions and modules use `snake_case`; classes are `PascalCase`.
 - Keep runtime dependencies minimal. Use the standard library where practical.

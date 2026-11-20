@@ -22,8 +22,9 @@ own VNC server (a plain Proxmox VM console), `type --us-shift` adds the Shift
 presses that server leaves out.
 
 The CLI is styled with [rich-click](https://github.com/ewels/rich-click); the RFB
-protocol and pixel drawing are pure standard library, and screenshots are written
-as PNG with [Pillow](https://python-pillow.org/). The tool also needs one external
+protocol runs over a plain standard-library socket, VNC password authentication uses
+[cryptography](https://cryptography.io/), and the overlays and PNG screenshots are
+drawn with [Pillow](https://python-pillow.org/). The tool also needs one external
 program: tesseract, used for OCR. See the Install section.
 
 ## When this is useful
@@ -139,7 +140,9 @@ exclude-newer = "7 days"
 
 The CLI uses [rich-click](https://github.com/ewels/rich-click), so help output and
 validation errors render with Rich styling while keeping the familiar click
-ergonomics. Every command needs `--port`. The host defaults to `127.0.0.1`.
+ergonomics. The six VNC commands (`type`, `key`, `click`, `screenshot`, `ocr`,
+`click-text`) need `--port`; the host defaults to `127.0.0.1`. The other commands
+(`info`, `config`, the email commands) run without it.
 
 ```bash
 # type a command and press Return
