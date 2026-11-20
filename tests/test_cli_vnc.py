@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
     from click.testing import CliRunner
-
     from lib_layered_config import Config
 
 
