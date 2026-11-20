@@ -274,21 +274,6 @@ layers = [
   "vnc_remote_control.domain",
 ]
 
-[tool.pip-audit]
-# Known vulnerabilities to ignore. These live in the shared bmk tool environment
-# (which audits many unrelated bitranox projects' packages), not in this project's
-# locked dependency tree. The project's own `uv run pip-audit` reports clean.
-ignore-vulns = [
-  "PYSEC-2022-42969",       # py 1.11.0, ReDoS, env-only, no fix available
-  "CVE-2025-8869",          # pip 24.3.1, env-only, not a project dependency
-  "CVE-2026-1703",          # pip 24.3.1, env-only, not a project dependency
-  "CVE-2026-25990",         # pillow 12.0.0, env-only, fix in 12.1.1
-  "GHSA-537c-gmf6-5ccf",    # cryptography 48.0.0, env-only, fix in 48.0.1
-  "GHSA-6v7p-g79w-8964",    # msgpack 1.1.2, env-only, fix in 1.2.1
-  "GHSA-4xgf-cpjx-pc3j",    # pydantic-settings 2.14.1, env-only, fix in 2.14.2
-  "GHSA-4cc2-g9w2-fhf6",    # zeep 4.3.2, env-only, fix in 4.3.3
-]
-
 [tool.bashate]
 # bashate style settings for .sh files (E003 excluded: indent handled by shfmt)
 max-line-length = 120
