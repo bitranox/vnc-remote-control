@@ -6,6 +6,12 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+### Added
+
+- `vnc-remote-control key --help` lists every key name `key` accepts, generated from the keymap, so the
+  list cannot fall behind it. The README, the module reference and the `vnc-remote-control` skill point
+  at it instead of a partial list ending in "...".
+
 ## [1.2.5] - 2026-11-20
 
 ### Fixed
