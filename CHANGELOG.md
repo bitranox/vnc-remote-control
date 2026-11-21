@@ -6,6 +6,8 @@ the [Keep a Changelog](https://keepachangelog.com/) format.
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-11-21
+
 ### Added
 
 - `vnc-remote-control key --help` lists every key name `key` accepts, generated from the keymap, so the
