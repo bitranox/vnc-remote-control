@@ -25,6 +25,7 @@ import tempfile
 import lib_log_rich.runtime
 import rich_click as click
 
+from ....domain import keymap
 from ... import ocr
 from ...config.vnc import InvalidVncConfigError, build_rfb_timings
 from ...rfb import RfbClient, RfbError
@@ -39,6 +40,10 @@ logger = logging.getLogger(__name__)
 
 #: Number of comma-separated parts expected in an ``X,Y`` value.
 _XY_PARTS = 2
+
+#: The ``key`` command's help footer, built from the keymap so the list cannot drift from the
+#: names ``RfbClient.press`` accepts. Keymap order keeps aliases next to their key (enter, return).
+_KEY_NAMES_EPILOG = f"Key names: {', '.join(keymap.NAMED_KEYS)}. Case does not matter."
 
 
 def _server(ctx: click.Context) -> tuple[str, int, str | None]:
@@ -139,7 +144,7 @@ def cli_type(ctx: click.Context, text: str, *, enter: bool, us_shift: bool) -> N
     safe_console.echo("typed", err=True)
 
 
-@click.command("key", context_settings=CLICK_CONTEXT_SETTINGS)
+@click.command("key", context_settings=CLICK_CONTEXT_SETTINGS, epilog=_KEY_NAMES_EPILOG)
 @argument("name")
 @click.pass_context
 def cli_key(ctx: click.Context, name: str) -> None:

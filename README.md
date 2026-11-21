@@ -50,7 +50,8 @@ makes the tool a good fit when:
 ## What it does
 
 - `type` a string into the focused guest field (literal keysyms).
-- `key` presses a single named key (enter, tab, esc, arrows, function keys).
+- `key` presses a single named key (enter, tab, esc, arrows, function keys);
+  `vnc-remote-control key --help` lists every name it accepts.
 - `click` sends a left-button click at a pixel position.
 - `screenshot` writes the native-resolution framebuffer to a PNG file, with
   optional crosshair and grid overlays.

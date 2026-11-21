@@ -222,7 +222,7 @@ POSIX-conventional exit codes defined in `adapters/cli/exit_codes.py`:
 | Subcommand                                   | Description                                                               |
 |----------------------------------------------|---------------------------------------------------------------------------|
 | `type TEXT [--enter]`                        | Type a string into the guest (literal keysyms)                            |
-| `key NAME`                                   | Press a single named key (enter, tab, esc, arrows, function keys)         |
+| `key NAME`                                   | Press a single named key; `key --help` lists every accepted name          |
 | `click X Y`                                  | Left-click at a pixel position                                            |
 | `screenshot OUTFILE [--mark X,Y] [--grid N]` | Save the native-resolution framebuffer to a PNG; prints `resolution: WxH` |
 | `ocr [--grep PATTERN] [--min-confidence N]`  | List on-screen words with their click centers and confidence              |

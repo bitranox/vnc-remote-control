@@ -11,6 +11,7 @@ from vnc_remote_control.adapters import ocr
 from vnc_remote_control.adapters.cli.commands import vnc as vnc_cmd
 from vnc_remote_control.adapters.config.vnc import build_rfb_timings
 from vnc_remote_control.composition import build_production
+from vnc_remote_control.domain import keymap
 from vnc_remote_control.domain.timing import RfbTimings
 
 if TYPE_CHECKING:
@@ -291,3 +292,21 @@ def test_an_invalid_vnc_setting_refuses_with_exit_78_and_one_line(
     assert refusals[0].startswith("Error: vnc.key_up_gap: "), result.stderr
     assert "errors.pydantic.dev" not in result.stderr
     assert "Traceback" not in result.stderr
+
+
+def _flattened(text: str) -> str:
+    """Help text with rich-click's box characters removed and whitespace collapsed."""
+    boxless = "".join(" " if 0x2500 <= ord(char) <= 0x257F else char for char in text)
+    return " ".join(boxless.split())
+
+
+@pytest.mark.os_agnostic
+def test_key_help_lists_every_named_key(cli_runner: CliRunner) -> None:
+    """``key --help`` names exactly the keys the client accepts, in the keymap's order."""
+    result = cli_runner.invoke(cli_mod.cli, ["key", "--help"], obj=build_production)
+
+    assert result.exit_code == 0, result.output
+    help_text = _flattened(result.output)
+    assert "Key names: " in help_text, help_text
+    listed = help_text.split("Key names: ", 1)[1].split(".", 1)[0]
+    assert listed.split(", ") == list(keymap.NAMED_KEYS), help_text
